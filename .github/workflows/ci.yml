@@ -1,5 +1,8 @@
 name: CI pipeline
 
+permissions:
+  checks: write
+
 on:
   pull_request:
     paths:
@@ -9,6 +12,8 @@ on:
       - '*'
     tags-ignore:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+      - '**.md'
 
 jobs:
   ci-pipeline:
@@ -40,7 +45,7 @@ jobs:
             3.9
       - name: Build and test
         run: |
-          sbt -java-home "$JAVA_HOME_17_X64" clean +test -DsparkVersion="$SPARK_VERSION"
+          sbt -java-home "$JAVA_HOME_8_X64" clean +test -DsparkVersion="$SPARK_VERSION"
       - name: Publish Unit test results
         uses: mikepenz/action-junit-report@v4
         with:

@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.jelmerk/hnswlib-spark_2.3_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.jelmerk/hnswlib-spark_2.3_2.11) [![Scaladoc](https://javadoc.io/badge2/com.github.jelmerk/hnswlib-spark_2.3_2.11/javadoc.svg)](https://javadoc.io/doc/com.github.jelmerk/hnswlib-spark_2.3_2.11)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.jelmerk/hnswlib-spark_3_3_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.jelmerk/hnswlib-spark_3.3_2.12) [![Scaladoc](https://javadoc.io/badge2/com.github.jelmerk/hnswlib-spark_3_3_2.12/javadoc.svg)](https://javadoc.io/doc/com.github.jelmerk/hnswlib-spark_2.3_2.11)
 
 
 hnswlib-spark
@@ -23,18 +23,19 @@ Setup
 
 Find the package appropriate for your spark setup
 
-|             | Scala 2.11                                      | Scala 2.12                                      |
-| ----------- |-------------------------------------------------|-------------------------------------------------|
-| Spark 2.3.x | com.github.jelmerk:hnswlib-spark_2.3_2.11:1.1.0 |                                                 |
-| Spark 2.4.x | com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0 | com.github.jelmerk:hnswlib-spark_2.4_2.12:1.1.0 |
-| Spark 3.0.x |                                                 | com.github.jelmerk:hnswlib-spark_3.0_2.12:1.1.0 | 
-| Spark 3.1.x |                                                 | com.github.jelmerk:hnswlib-spark_3.1_2.12:1.1.0 |
-| Spark 3.2.x |                                                 | com.github.jelmerk:hnswlib-spark_3.2_2.12:1.1.0 |
-| Spark 3.3.x |                                                 | com.github.jelmerk:hnswlib-spark_3.3_2.12:1.1.0 |
+|             | Scala 2.11                                      | Scala 2.12                                      | Scala 2.13                                      |
+|-------------|-------------------------------------------------|-------------------------------------------------|-------------------------------------------------|
+| Spark 2.4.x | com.github.jelmerk:hnswlib-spark_2_4_2.11:1.1.0 | com.github.jelmerk:hnswlib-spark_2_4_2.12:1.1.1 |                                                 |
+| Spark 3.0.x |                                                 | com.github.jelmerk:hnswlib-spark_3_0_2.12:1.1.1 |                                                 |
+| Spark 3.1.x |                                                 | com.github.jelmerk:hnswlib-spark_3_1_2.12:1.1.1 |                                                 |
+| Spark 3.2.x |                                                 | com.github.jelmerk:hnswlib-spark_3_2_2.12:1.1.1 | com.github.jelmerk:hnswlib-spark_3_2_2.13:1.1.1 |
+| Spark 3.3.x |                                                 | com.github.jelmerk:hnswlib-spark_3_3_2.12:1.1.1 | com.github.jelmerk:hnswlib-spark_3_3_2.13:1.1.1 |
+| Spark 3.4.x |                                                 | com.github.jelmerk:hnswlib-spark_3_4_2.12:1.1.1 | com.github.jelmerk:hnswlib-spark_3_4_2.13:1.1.1 |
+| Spark 3.5.x |                                                 | com.github.jelmerk:hnswlib-spark_3_5_2.12:1.1.1 | com.github.jelmerk:hnswlib-spark_3_5_2.13:1.1.1 |
 
 Pass this as an argument to spark
 
-    --packages 'com.github.jelmerk:hnswlib-spark_2.3_2.11:1.1.0'
+    --packages 'com.github.jelmerk:hnswlib-spark_3_3_2.12:1.1.1'
 
 Example usage
 -------------

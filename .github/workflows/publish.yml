@@ -1,11 +1,13 @@
 name: Publish pipeline
 
-on:
-  workflow_dispatch:
+permissions:
+  contents: read
 
+on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
 
 jobs:
   publish-artifacts:
@@ -45,4 +47,5 @@ jobs:
           PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       - name: Publish artifacts
         run: |
-          sbt -java-home "$JAVA_HOME_17_X64" clean +publishSigned -DsparkVersion="$SPARK_VERSION"
+          sbt -java-home "$JAVA_HOME_8_X64" clean +publishSigned -DsparkVersion="$SPARK_VERSION"
+          sbt sonatypeBundleRelease
