@@ -7,7 +7,6 @@ ThisBuild / scalaVersion := "2.12.18"
 ThisBuild / fork := true
 
 ThisBuild / dynverSonatypeSnapshots := true
-ThisBuild / publishMavenStyle := true
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -19,8 +18,8 @@ lazy val publishSettings = Seq(
   homepage := Some(url("https://github.com/jelmerk/hnswlib-spark")),
 
   scmInfo := Some(ScmInfo(
-    url("https://github.com/jelmerk/hnswlib.git"),
-    "scm:git@github.com:jelmerk/hnswlib.git"
+    url("https://github.com/jelmerk/hnswlib-spark.git"),
+    "scm:git@github.com:jelmerk/hnswlib-spark.git"
   )),
 
   developers := List(
@@ -45,7 +44,6 @@ val hnswLibVersion = "1.1.0"
 val sparkVersion = settingKey[String]("Spark version")
 
 lazy val pyTest    = taskKey[Unit]("Run the python tests")
-lazy val pyPublish = taskKey[Unit]("Publish the python sources to a pypi repo")
 
 lazy val root = (project in file("."))
   .aggregate(hnswlibSpark)
