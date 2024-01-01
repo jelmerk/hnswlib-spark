@@ -3,7 +3,7 @@ package com.github.jelmerk.spark.knn
 import java.io.InputStream
 import java.net.InetAddress
 import java.util.concurrent.{CountDownLatch, ExecutionException, FutureTask, LinkedBlockingQueue, ThreadLocalRandom, ThreadPoolExecutor, TimeUnit}
-import com.github.jelmerk.knn.ObjectSerializer
+import com.github.jelmerk.knn.{Jdk17DistanceFunctions, ObjectSerializer}
 
 import scala.language.{higherKinds, implicitConversions}
 import scala.reflect.ClassTag
@@ -25,6 +25,7 @@ import org.apache.spark.sql.types._
 import org.json4s.jackson.JsonMethods._
 import org.json4s._
 import com.github.jelmerk.knn.scalalike._
+import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions._
 import com.github.jelmerk.knn.util.NamedThreadFactory
 import com.github.jelmerk.spark.linalg.functions.VectorDistanceFunctions
 import com.github.jelmerk.spark.util.SerializableConfiguration
@@ -953,16 +954,23 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
 
   private def logInfo(partition: Int, message: String): Unit = logInfo(f"partition $partition%04d: $message")
 
-  implicit private def floatArrayDistanceFunction(name: String): DistanceFunction[Array[Float], Float] = name match {
-    case "bray-curtis" => floatBrayCurtisDistance
-    case "canberra" => floatCanberraDistance
-    case "correlation" => floatCorrelationDistance
-    case "cosine" => floatCosineDistance
-    case "euclidean" => floatEuclideanDistance
-    case "inner-product" => floatInnerProduct
-    case "manhattan" => floatManhattanDistance
-    case value => userDistanceFunction(value)
-  }
+  implicit private def floatArrayDistanceFunction(name: String): DistanceFunction[Array[Float], Float] =
+    (name, vectorApiAvailable) match {
+      case ("bray-curtis", true) => vectorFloat128BrayCurtisDistance
+      case ("bray-curtis", _) => floatBrayCurtisDistance
+      case ("canberra", true)=> vectorFloat128CanberraDistance
+      case ("canberra", _) => floatCanberraDistance
+      case ("correlation", _) => floatCorrelationDistance
+      case ("cosine", true) => vectorFloat128CosineDistance
+      case ("cosine", _) => floatCosineDistance
+      case ("euclidean", true) => vectorFloat128EuclideanDistance
+      case ("euclidean", _) => floatEuclideanDistance
+      case ("inner-product", true) => vectorFloat128InnerProduct
+      case ("inner-product", _) => floatInnerProduct
+      case ("manhattan", true) => vectorFloat128ManhattanDistance
+      case ("manhattan", _) => floatManhattanDistance
+      case (value, _) => userDistanceFunction(value)
+    }
 
   implicit private def doubleArrayDistanceFunction(name: String): DistanceFunction[Array[Double], Double] = name match {
     case "bray-curtis" => doubleBrayCurtisDistance
@@ -984,6 +992,13 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
     case "inner-product" => VectorDistanceFunctions.innerProduct
     case "manhattan" => VectorDistanceFunctions.manhattanDistance
     case value => userDistanceFunction(value)
+  }
+
+  private def vectorApiAvailable: Boolean = try {
+    val _ = Jdk17DistanceFunctions.VECTOR_FLOAT_128_COSINE_DISTANCE
+    true
+  } catch {
+    case _: Throwable => false
   }
 
   private def userDistanceFunction[TVector, TDistance](name: String): DistanceFunction[TVector, TDistance] =
