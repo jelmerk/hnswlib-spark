@@ -1,7 +1,7 @@
 package com.github.jelmerk.spark
 
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.{SQLContext, SparkSession}
+import org.apache.spark.sql.{SparkSession, SQLContext}
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 /** Shares a local `SparkContext` between all tests in a suite and closes it at the end */
@@ -10,15 +10,15 @@ trait SharedSparkContext extends BeforeAndAfterAll {
 
   @transient private var sparkSession: SparkSession = _
 
-  def appID: String = this.getClass.getName + math.floor(math.random * 10E4).toLong.toString
+  def appID: String = this.getClass.getName + math.floor(math.random * 10e4).toLong.toString
 
   def conf: SparkConf = {
-    new SparkConf().
-      setMaster("local[*]").
-      setAppName("test").
-      set("spark.ui.enabled", "false").
-      set("spark.app.id", appID).
-      set("spark.driver.host", "localhost")
+    new SparkConf()
+      .setMaster("local[*]")
+      .setAppName("test")
+      .set("spark.ui.enabled", "false")
+      .set("spark.app.id", appID)
+      .set("spark.driver.host", "localhost")
   }
 
   def spark: SQLContext = sparkSession.sqlContext

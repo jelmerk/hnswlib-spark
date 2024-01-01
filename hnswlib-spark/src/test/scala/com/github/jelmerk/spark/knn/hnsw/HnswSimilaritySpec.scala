@@ -26,14 +26,14 @@ case class FullOutputRow[TId, TVector, TDistance](id: TId, vector: TVector, neig
 
   // case classes won't work because array equals is implemented as identity equality
   override def equals(other: Any): Boolean = EqualsBuilder.reflectionEquals(this, other)
-  override def hashCode(): Int = HashCodeBuilder.reflectionHashCode(this)
+  override def hashCode(): Int             = HashCodeBuilder.reflectionHashCode(this)
 }
 
 case class MinimalOutputRow[TId, TDistance](id: TId, neighbors: Seq[Neighbor[TId, TDistance]]) {
 
   // case classes won't work because array equals is implemented as identity equality
   override def equals(other: Any): Boolean = EqualsBuilder.reflectionEquals(this, other)
-  override def hashCode(): Int = HashCodeBuilder.reflectionHashCode(this)
+  override def hashCode(): Int             = HashCodeBuilder.reflectionHashCode(this)
 }
 
 class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
@@ -69,12 +69,13 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
       QueryRow(partitions = Seq(0), id = 123, vector = Vectors.dense(0.2400, 0.3891))
     ).toDF()
 
-    val result = model.transform(queries)
+    val result = model
+      .transform(queries)
       .as[FullOutputRow[Int, DenseVector, Double]]
       .collect()
       .head
 
-    result.neighbors.size should be (2) // it couldn't see 3000000 because we only query partition 0
+    result.neighbors.size should be(2) // it couldn't see 3000000 because we only query partition 0
   }
 
   test("find neighbors") {
@@ -93,17 +94,17 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
     val denseVectorScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[Int, DenseVector, Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(1000000, 3000000, 2000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 3000000, 1000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(1000000, 3000000, 2000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 3000000, 1000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000, 1000000))
     }
 
     val minimalDenseVectorScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[MinimalOutputRow[Int, Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(1000000, 3000000, 2000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 3000000, 1000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(1000000, 3000000, 2000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 3000000, 1000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000, 1000000))
     }
 
     val sparseVectorInput = Seq(
@@ -115,39 +116,41 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
     val sparseVectorScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[Int, SparseVector, Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 1000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 1000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 1000000))
     }
 
     val similarityThresholdScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[Int, DenseVector, Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(1000000, 3000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 3000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(1000000, 3000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 3000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000, 1000000))
     }
 
-    val floatArraySimilarityThresholdScenarioValidator: DataFrame => Unit= df => {
+    val floatArraySimilarityThresholdScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[String, Array[Float], Float]].collect()
 
-      rows.find(_.id == "1000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq("1000000", "3000000"))
-      rows.find(_.id == "2000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq("2000000", "3000000"))
-      rows.find(_.id == "3000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq("3000000", "2000000", "1000000"))
+      rows.find(_.id == "1000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq("1000000", "3000000"))
+      rows.find(_.id == "2000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq("2000000", "3000000"))
+      rows.find(_.id == "3000000").toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(
+        Seq("3000000", "2000000", "1000000")
+      )
     }
 
     val doubleArrayInput = Seq(
-       InputRow(1000000, Array(0.0110, 0.2341)),
-       InputRow(2000000, Array(0.2300, 0.3891)),
-       InputRow(3000000, Array(0.4300, 0.9891))
-     ).toDF()
+      InputRow(1000000, Array(0.0110, 0.2341)),
+      InputRow(2000000, Array(0.2300, 0.3891)),
+      InputRow(3000000, Array(0.4300, 0.9891))
+    ).toDF()
 
     val doubleArrayScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[Int, Array[Double], Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(1000000, 3000000, 2000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 3000000, 1000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(1000000, 3000000, 2000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 3000000, 1000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000, 1000000))
     }
 
     val floatArrayInput = Seq(
@@ -158,33 +161,44 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
 
     val floatArrayScenarioValidator: DataFrame => Unit = df =>
       df.as[FullOutputRow[String, Array[Float], Float]].collect() should contain only (
-        FullOutputRow("2000000", Array(0.2300f, 0.3891f), Seq(Neighbor("2000000", 0.0f), Neighbor("3000000", 0.0076490045f), Neighbor("1000000", 0.11621308f))),
-        FullOutputRow("3000000", Array(0.4300f, 0.9891f), Seq(Neighbor("3000000", 0.0f), Neighbor("2000000", 0.0076490045f), Neighbor("1000000", 0.06521261f))),
-        FullOutputRow("1000000", Array(0.0110f, 0.2341f), Seq(Neighbor("1000000", 0.0f), Neighbor("3000000", 0.06521261f), Neighbor("2000000", 0.11621308f)))
+        FullOutputRow(
+          "2000000",
+          Array(0.2300f, 0.3891f),
+          Seq(Neighbor("2000000", 0.0f), Neighbor("3000000", 0.0076490045f), Neighbor("1000000", 0.11621308f))
+        ),
+        FullOutputRow(
+          "3000000",
+          Array(0.4300f, 0.9891f),
+          Seq(Neighbor("3000000", 0.0f), Neighbor("2000000", 0.0076490045f), Neighbor("1000000", 0.06521261f))
+        ),
+        FullOutputRow(
+          "1000000",
+          Array(0.0110f, 0.2341f),
+          Seq(Neighbor("1000000", 0.0f), Neighbor("3000000", 0.06521261f), Neighbor("2000000", 0.11621308f))
+        )
       )
 
     val excludeSelfScenarioValidator: DataFrame => Unit = df => {
       val rows = df.as[FullOutputRow[Int, SparseVector, Double]].collect()
 
-      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 2000000))
-      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(3000000, 1000000))
-      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be (Seq(2000000, 1000000))
+      rows.find(_.id == 1000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 2000000))
+      rows.find(_.id == 2000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(3000000, 1000000))
+      rows.find(_.id == 3000000).toSeq.flatMap(_.neighbors.map(_.neighbor)) should be(Seq(2000000, 1000000))
     }
 
     val scenarios = Table[String, Boolean, Double, DataFrame, DataFrame => Unit](
-      ("outputFormat", "excludeSelf", "similarityThreshold", "input",           "validator"),
-      ("full",         false,         1,                     denseVectorInput,  denseVectorScenarioValidator),
-      ("minimal",      false,         1,                     denseVectorInput,  minimalDenseVectorScenarioValidator),
-      ("full",         false,         0.1,                   denseVectorInput,  similarityThresholdScenarioValidator),
-      ("full",         false,         0.1,                   floatArrayInput,   floatArraySimilarityThresholdScenarioValidator),
-      ("full",         false,         noSimilarityThreshold, doubleArrayInput,  doubleArrayScenarioValidator),
-      ("full",         false,         noSimilarityThreshold, floatArrayInput,   floatArrayScenarioValidator),
-      ("full",         true,          noSimilarityThreshold, denseVectorInput,  excludeSelfScenarioValidator),
-      ("full",         true,          1,                     sparseVectorInput, sparseVectorScenarioValidator)
+      ("outputFormat", "excludeSelf", "similarityThreshold", "input", "validator"),
+      ("full", false, 1, denseVectorInput, denseVectorScenarioValidator),
+      ("minimal", false, 1, denseVectorInput, minimalDenseVectorScenarioValidator),
+      ("full", false, 0.1, denseVectorInput, similarityThresholdScenarioValidator),
+      ("full", false, 0.1, floatArrayInput, floatArraySimilarityThresholdScenarioValidator),
+      ("full", false, noSimilarityThreshold, doubleArrayInput, doubleArrayScenarioValidator),
+      ("full", false, noSimilarityThreshold, floatArrayInput, floatArrayScenarioValidator),
+      ("full", true, noSimilarityThreshold, denseVectorInput, excludeSelfScenarioValidator),
+      ("full", true, 1, sparseVectorInput, sparseVectorScenarioValidator)
     )
 
-    forAll (scenarios) { case (outputFormat, excludeSelf, similarityThreshold, input, validator) =>
-
+    forAll(scenarios) { case (outputFormat, excludeSelf, similarityThreshold, input, validator) =>
       val hnsw = new HnswSimilarity()
         .setIdentifierCol("id")
         .setQueryIdentifierCol("id")
@@ -223,7 +237,6 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
     ).toDF()
 
     withTempFolder { folder =>
-
       val path = new File(folder, "model").getCanonicalPath
 
       hnsw.fit(items).write.overwrite.save(path)
@@ -237,7 +250,12 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
       val results = model.transform(queryItems).as[MinimalOutputRow[Int, Float]].collect()
 
       results.length should be(1)
-      results.head should be (MinimalOutputRow(1000000, Seq(Neighbor(1000000, 0.0f), Neighbor(3000000, 0.06521261f), Neighbor(2000000, 0.11621308f))))
+      results.head should be(
+        MinimalOutputRow(
+          1000000,
+          Seq(Neighbor(1000000, 0.0f), Neighbor(3000000, 0.06521261f), Neighbor(2000000, 0.11621308f))
+        )
+      )
     }
 
   }
@@ -250,6 +268,5 @@ class HnswSimilaritySpec extends AnyFunSuite with DataFrameSuiteBase {
       FileUtils.deleteDirectory(tempDir)
     }
   }
-
 
 }
