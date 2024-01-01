@@ -40,7 +40,7 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-val hnswLibVersion = "1.1.0"
+val hnswLibVersion = "1.1.2"
 val sparkVersion = settingKey[String]("Spark version")
 
 lazy val pyTest    = taskKey[Unit]("Run the python tests")
@@ -102,6 +102,7 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
     pyTest := pyTest.dependsOn(assembly).value,
     libraryDependencies ++= Seq(
       "com.github.jelmerk" %  "hnswlib-utils"      % hnswLibVersion,
+      "com.github.jelmerk" %  "hnswlib-core-jdk17" % hnswLibVersion,
       "com.github.jelmerk" %% "hnswlib-scala"      % hnswLibVersion,
       "org.apache.spark"   %% "spark-hive"         % sparkVersion.value             % Provided,
       "org.apache.spark"   %% "spark-mllib"        % sparkVersion.value             % Provided,
