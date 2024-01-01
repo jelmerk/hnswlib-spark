@@ -9,24 +9,27 @@ import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.param.shared.{HasInputCol, HasOutputCol}
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import org.apache.spark.sql.{DataFrame, Dataset}
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
-/**
-  * Companion class for Normalizer.
+/** Companion class for Normalizer.
   */
 object Normalizer extends DefaultParamsReadable[Normalizer] {
   override def load(path: String): Normalizer = super.load(path)
 }
 
-/**
-  * Normalizes vectors to unit norm.
+/** Normalizes vectors to unit norm.
   *
-  * @param uid identifier
+  * @param uid
+  *   identifier
   */
 class Normalizer(override val uid: String)
-  extends Transformer with HasInputCol with HasOutputCol with Logging with DefaultParamsWritable {
+    extends Transformer
+    with HasInputCol
+    with HasOutputCol
+    with Logging
+    with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("norm"))
 
@@ -37,8 +40,8 @@ class Normalizer(override val uid: String)
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
   override def transform(dataset: Dataset[_]): DataFrame = dataset.schema(getInputCol).dataType match {
-    case VectorType => dataset.withColumn(getOutputCol, normalizeVector(col(getInputCol)))
-    case ArrayType(FloatType, _) =>  dataset.withColumn(getOutputCol, normalizeFloatArray(col(getInputCol)))
+    case VectorType               => dataset.withColumn(getOutputCol, normalizeVector(col(getInputCol)))
+    case ArrayType(FloatType, _)  => dataset.withColumn(getOutputCol, normalizeFloatArray(col(getInputCol)))
     case ArrayType(DoubleType, _) => dataset.withColumn(getOutputCol, normalizeDoubleArray(col(getInputCol)))
   }
 
@@ -56,10 +59,10 @@ class Normalizer(override val uid: String)
     val inputColumnSchema = schema(getInputCol)
 
     val inputColHasValidDataType = inputColumnSchema.dataType match {
-      case VectorType => true
-      case ArrayType(FloatType, _) => true
+      case VectorType               => true
+      case ArrayType(FloatType, _)  => true
       case ArrayType(DoubleType, _) => true
-      case _ => false
+      case _                        => false
     }
 
     if (!inputColHasValidDataType) {
@@ -73,24 +76,26 @@ class Normalizer(override val uid: String)
   private def magnitude(vector: Vector): Double = {
     val values = vector match {
       case v: SparseVector => v.values
-      case v: DenseVector => v.values
+      case v: DenseVector  => v.values
     }
     Math.sqrt(values.map(v => v * v).sum)
   }
 
-  private val normalizeFloatArray: UserDefinedFunction = udf { value: Seq[Float] => VectorUtils.normalize(value.toArray) }
+  private val normalizeFloatArray: UserDefinedFunction = udf { value: Seq[Float] =>
+    VectorUtils.normalize(value.toArray)
+  }
 
-  private val normalizeDoubleArray: UserDefinedFunction = udf { value: Seq[Double] => VectorUtils.normalize(value.toArray) }
+  private val normalizeDoubleArray: UserDefinedFunction = udf { value: Seq[Double] =>
+    VectorUtils.normalize(value.toArray)
+  }
 
   private val normalizeVector: UserDefinedFunction = udf[Vector, Vector] { value =>
     val normFactor = 1 / magnitude(value)
 
     value match {
       case v: SparseVector => new SparseVector(v.size, v.indices, v.values.map(_ * normFactor))
-      case v: DenseVector => new DenseVector(v.values.map(_ * normFactor))
+      case v: DenseVector  => new DenseVector(v.values.map(_ * normFactor))
     }
   }
 
 }
-
-

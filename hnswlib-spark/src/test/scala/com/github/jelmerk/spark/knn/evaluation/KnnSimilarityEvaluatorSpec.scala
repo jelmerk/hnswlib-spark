@@ -18,10 +18,10 @@ class KnnSimilarityEvaluatorSpec extends AnyFunSuite with SharedSparkContext {
 
     val df = Seq(
       Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)) -> Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)),
-      Seq(Neighbor("3", 0.1f)) -> Seq(Neighbor("3", 0.1f), Neighbor("4", 0.9f))
+      Seq(Neighbor("3", 0.1f))                      -> Seq(Neighbor("3", 0.1f), Neighbor("4", 0.9f))
     ).toDF("approximate", "exact")
 
-    evaluator.evaluate(df) should be (0.75)
+    evaluator.evaluate(df) should be(0.75)
   }
 
   test("evaluate performance empty lists") {
@@ -36,7 +36,7 @@ class KnnSimilarityEvaluatorSpec extends AnyFunSuite with SharedSparkContext {
       Seq.empty[Neighbor[Int, Float]] -> Seq.empty[Neighbor[Int, Float]]
     ).toDF("approximate", "exact")
 
-    evaluator.evaluate(df) should be (1)
+    evaluator.evaluate(df) should be(1)
   }
 
 }

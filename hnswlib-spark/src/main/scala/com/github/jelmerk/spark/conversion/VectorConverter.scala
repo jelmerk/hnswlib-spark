@@ -13,8 +13,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{ArrayType, DataType, DoubleType, FloatType, StructType}
 
-/**
-  * Companion class for VectorConverter.
+/** Companion class for VectorConverter.
   */
 object VectorConverter extends DefaultParamsReadable[Normalizer] {
   override def load(path: String): Normalizer = super.load(path)
@@ -22,9 +21,7 @@ object VectorConverter extends DefaultParamsReadable[Normalizer] {
 
 private[conversion] trait VectorConverterParams extends HasInputCol with HasOutputCol {
 
-  /**
-    * Param for the type of vector to produce. one of array<float>, array<double>, vector
-    * Default: "array<float>"
+  /** Param for the type of vector to produce. one of array<float>, array<double>, vector Default: "array<float>"
     *
     * @group param
     */
@@ -36,13 +33,16 @@ private[conversion] trait VectorConverterParams extends HasInputCol with HasOutp
   setDefault(outputType -> "array<float>")
 }
 
-/**
-  * Converts the input vector to a vector of another type.
+/** Converts the input vector to a vector of another type.
   *
-  * @param uid identifier
+  * @param uid
+  *   identifier
   */
 class VectorConverter(override val uid: String)
-  extends Transformer with VectorConverterParams with Logging with DefaultParamsWritable {
+    extends Transformer
+    with VectorConverterParams
+    with Logging
+    with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("conv"))
 
@@ -57,18 +57,21 @@ class VectorConverter(override val uid: String)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
 
-    dataset.withColumn(getOutputCol, (dataset.schema(getInputCol).dataType, getOutputType) match {
-      case (ArrayType(FloatType, _), "array<double>") => floatArrayToDoubleArray(col(getInputCol))
-      case (ArrayType(FloatType, _), "vector") => floatArrayToVector(col(getInputCol))
+    dataset.withColumn(
+      getOutputCol,
+      (dataset.schema(getInputCol).dataType, getOutputType) match {
+        case (ArrayType(FloatType, _), "array<double>") => floatArrayToDoubleArray(col(getInputCol))
+        case (ArrayType(FloatType, _), "vector")        => floatArrayToVector(col(getInputCol))
 
-      case (ArrayType(DoubleType, _), "array<float>") => doubleArrayToFloatArray(col(getInputCol))
-      case (ArrayType(DoubleType, _), "vector") => doubleArrayToVector(col(getInputCol))
+        case (ArrayType(DoubleType, _), "array<float>") => doubleArrayToFloatArray(col(getInputCol))
+        case (ArrayType(DoubleType, _), "vector")       => doubleArrayToVector(col(getInputCol))
 
-      case (VectorType, "array<float>") => vectorToFloatArray(col(getInputCol))
-      case (VectorType, "array<double>") => vectorToDoubleArray(col(getInputCol))
+        case (VectorType, "array<float>")  => vectorToFloatArray(col(getInputCol))
+        case (VectorType, "array<double>") => vectorToDoubleArray(col(getInputCol))
 
-      case _ => throw new IllegalArgumentException("Cannot convert vector")
-    })
+        case _ => throw new IllegalArgumentException("Cannot convert vector")
+      }
+    )
   }
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
@@ -85,9 +88,9 @@ class VectorConverter(override val uid: String)
     val inputColumnSchema = schema(getInputCol)
 
     val inputColHasValidDataType = inputColumnSchema.dataType match {
-      case VectorType => true
+      case VectorType               => true
       case ArrayType(DoubleType, _) => true
-      case _ => false
+      case _                        => false
     }
 
     if (!inputColHasValidDataType) {
@@ -96,8 +99,8 @@ class VectorConverter(override val uid: String)
 
     val outputType: DataType = getOutputType match {
       case "array<double>" => ArrayType(DoubleType)
-      case "array<float>" => ArrayType(FloatType)
-      case "vector" => VectorType
+      case "array<float>"  => ArrayType(FloatType)
+      case "vector"        => VectorType
     }
 
     schema
@@ -108,11 +111,15 @@ class VectorConverter(override val uid: String)
 
   private val doubleArrayToFloatArray: UserDefinedFunction = udf { vector: Seq[Double] => vector.map(_.toFloat) }
 
-  private val floatArrayToDoubleArray: UserDefinedFunction = udf { vector: Seq[Float] => vector.toArray.map(_.toDouble) }
+  private val floatArrayToDoubleArray: UserDefinedFunction = udf { vector: Seq[Float] =>
+    vector.toArray.map(_.toDouble)
+  }
 
   private val vectorToDoubleArray: UserDefinedFunction = udf { vector: Vector => vector.toArray }
 
-  private val floatArrayToVector: UserDefinedFunction = udf { vector: Seq[Float] => Vectors.dense(vector.map(_.toDouble).toArray) }
+  private val floatArrayToVector: UserDefinedFunction = udf { vector: Seq[Float] =>
+    Vectors.dense(vector.map(_.toDouble).toArray)
+  }
 
   private val doubleArrayToVector: UserDefinedFunction = udf { vector: Seq[Double] => Vectors.dense(vector.toArray) }
 

@@ -1,44 +1,50 @@
 package com.github.jelmerk.spark.linalg.functions
 
+import math.{abs, pow, sqrt}
 import org.apache.spark.ml.linalg.SparseVector
-import math.{abs, sqrt, pow}
 
 object SparseVectorDistanceFunctions {
 
-  /**
-   * Calculates the cosine distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Cosine distance between u and v.
-   */
+  /** Calculates the cosine distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Cosine distance between u and v.
+    */
   def cosineDistance(u: SparseVector, v: SparseVector): Double = {
     val denom = norm(u) * norm(v)
-    val dot = innerProduct(u, v)
+    val dot   = innerProduct(u, v)
 
     if (denom == 0.0) 1d
     else 1 - dot / denom
   }
 
-  /**
-   * Calculates the inner product.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Inner product between u and v.
-   */
+  /** Calculates the inner product.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Inner product between u and v.
+    */
   def innerProductDistance(u: SparseVector, v: SparseVector): Double = 1 - innerProduct(u, v)
 
-  /**
-   * Calculates the Bray Curtis distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Bray Curtis distance between u and v.
-   */
+  /** Calculates the Bray Curtis distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Bray Curtis distance between u and v.
+    */
   def brayCurtisDistance(u: SparseVector, v: SparseVector): Double = {
     val uIndices = u.indices
     val vIndices = v.indices
@@ -52,7 +58,7 @@ object SparseVectorDistanceFunctions {
     var i = 0
     var j = 0
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         val incr = abs(uValues(i))
 
@@ -73,7 +79,7 @@ object SparseVectorDistanceFunctions {
       }
     }
 
-    while(i < uIndices.length) {
+    while (i < uIndices.length) {
       val incr = abs(uValues(i))
 
       sumn += incr
@@ -81,7 +87,7 @@ object SparseVectorDistanceFunctions {
       i += 1
     }
 
-    while(j < vIndices.length) {
+    while (j < vIndices.length) {
       val incr = abs(vValues(j))
 
       sumn += incr
@@ -92,14 +98,16 @@ object SparseVectorDistanceFunctions {
     sumn / sump
   }
 
-  /**
-   * Calculates the canberra distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Canberra distance between u and v.
-   */
+  /** Calculates the canberra distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Canberra distance between u and v.
+    */
   def canberraDistance(u: SparseVector, v: SparseVector): Double = {
     val uIndices = u.indices
     val vIndices = v.indices
@@ -112,7 +120,7 @@ object SparseVectorDistanceFunctions {
     var i = 0
     var j = 0
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         distance += 1
         i += 1
@@ -129,14 +137,16 @@ object SparseVectorDistanceFunctions {
     distance + (uIndices.length - i) + (vIndices.length - j)
   }
 
-  /**
-   * Calculates the correlation distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Correlation distance between u and v.
-   */
+  /** Calculates the correlation distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Correlation distance between u and v.
+    */
   def correlationDistance(u: SparseVector, v: SparseVector): Double = {
 
     val x = -u.values.sum / u.size
@@ -148,7 +158,7 @@ object SparseVectorDistanceFunctions {
     val uValues = u.values
     val vValues = v.values
 
-    var num = 0.0
+    var num  = 0.0
     var den1 = 0.0
     var den2 = 0.0
 
@@ -159,7 +169,7 @@ object SparseVectorDistanceFunctions {
 
     val absXSquared = abs(pow(x, 2))
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         num += (uValues(i) + x) * y
 
@@ -187,7 +197,7 @@ object SparseVectorDistanceFunctions {
       }
     }
 
-    while(i < uIndices.length) {
+    while (i < uIndices.length) {
       num += (uValues(i) + x) * y
 
       den1 += abs(pow(uValues(i) + x, 2))
@@ -197,7 +207,7 @@ object SparseVectorDistanceFunctions {
       i += 1
     }
 
-    while(j < vIndices.length) {
+    while (j < vIndices.length) {
       num += x * (vValues(j) + y)
 
       den1 += absXSquared
@@ -213,14 +223,16 @@ object SparseVectorDistanceFunctions {
     1 - (num / (sqrt(den1) * sqrt(den2)))
   }
 
-  /**
-   * Calculates the euclidean distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Euclidean distance between u and v.
-   */
+  /** Calculates the euclidean distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Euclidean distance between u and v.
+    */
   def euclideanDistance(u: SparseVector, v: SparseVector): Double = {
     val uIndices = u.indices
     val vIndices = v.indices
@@ -233,7 +245,7 @@ object SparseVectorDistanceFunctions {
     var i = 0
     var j = 0
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         sum += pow(uValues(i), 2)
         i += 1
@@ -248,12 +260,12 @@ object SparseVectorDistanceFunctions {
       }
     }
 
-    while(i < uIndices.length) {
+    while (i < uIndices.length) {
       sum += pow(uValues(i), 2)
       i += 1
     }
 
-    while(j < vIndices.length) {
+    while (j < vIndices.length) {
       sum += pow(vValues(j), 2)
       j += 1
     }
@@ -261,14 +273,16 @@ object SparseVectorDistanceFunctions {
     sqrt(sum)
   }
 
-  /**
-   * Calculates the manhattan distance.
-   *
-   * @param u Left vector.
-   * @param v Right vector.
-   *
-   * @return Manhattan distance between u and v.
-   */
+  /** Calculates the manhattan distance.
+    *
+    * @param u
+    *   Left vector.
+    * @param v
+    *   Right vector.
+    *
+    * @return
+    *   Manhattan distance between u and v.
+    */
   def manhattanDistance(u: SparseVector, v: SparseVector): Double = {
     val uIndices = u.indices
     val vIndices = v.indices
@@ -281,7 +295,7 @@ object SparseVectorDistanceFunctions {
     var i = 0
     var j = 0
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         sum += abs(uValues(i))
         i += 1
@@ -295,12 +309,12 @@ object SparseVectorDistanceFunctions {
       }
     }
 
-    while(i < uIndices.length) {
+    while (i < uIndices.length) {
       sum += abs(uValues(i))
       i += 1
     }
 
-    while(j < vIndices.length) {
+    while (j < vIndices.length) {
       sum += abs(vValues(j))
       j += 1
     }
@@ -322,7 +336,7 @@ object SparseVectorDistanceFunctions {
     var i = 0
     var j = 0
 
-    while(i < uIndices.length && j < vIndices.length) {
+    while (i < uIndices.length && j < vIndices.length) {
       if (uIndices(i) < vIndices(j)) {
         i += 1
       } else if (uIndices(i) > vIndices(j)) {

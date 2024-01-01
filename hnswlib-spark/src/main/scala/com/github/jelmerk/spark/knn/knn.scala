@@ -9,17 +9,17 @@ package object knn {
 
   private[knn] implicit object StringSerializer extends ObjectSerializer[String] {
     override def write(item: String, out: ObjectOutput): Unit = out.writeUTF(item)
-    override def read(in: ObjectInput): String = in.readUTF()
+    override def read(in: ObjectInput): String                = in.readUTF()
   }
 
   private[knn] implicit object IntSerializer extends ObjectSerializer[Int] {
     override def write(item: Int, out: ObjectOutput): Unit = out.writeInt(item)
-    override def read(in: ObjectInput): Int = in.readInt()
+    override def read(in: ObjectInput): Int                = in.readInt()
   }
 
   private[knn] implicit object LongSerializer extends ObjectSerializer[Long] {
     override def write(item: Long, out: ObjectOutput): Unit = out.writeLong(item)
-    override def read(in: ObjectInput): Long = in.readLong()
+    override def read(in: ObjectInput): Long                = in.readLong()
   }
 
   private[knn] implicit object FloatArraySerializer extends ObjectSerializer[Array[Float]] {
@@ -30,7 +30,7 @@ package object knn {
 
     override def read(in: ObjectInput): Array[Float] = {
       val length = in.readInt()
-      val item = Array.ofDim[Float](length)
+      val item   = Array.ofDim[Float](length)
 
       for (i <- 0 until length) {
         item(i) = in.readFloat()
@@ -47,7 +47,7 @@ package object knn {
 
     override def read(in: ObjectInput): Array[Double] = {
       val length = in.readInt()
-      val item = Array.ofDim[Double](length)
+      val item   = Array.ofDim[Double](length)
 
       for (i <- 0 until length) {
         item(i) = in.readDouble()
@@ -55,7 +55,6 @@ package object knn {
       item
     }
   }
-
 
   private[knn] implicit object VectorSerializer extends ObjectSerializer[Vector] {
     override def write(item: Vector, out: ObjectOutput): Unit = item match {
@@ -74,7 +73,7 @@ package object knn {
 
     override def read(in: ObjectInput): Vector = {
       val isDense = in.readBoolean()
-      val size = in.readInt()
+      val size    = in.readInt()
 
       if (isDense) {
         val values = Array.ofDim[Double](size)
@@ -86,7 +85,7 @@ package object knn {
         Vectors.dense(values)
       } else {
         val numFilled = in.readInt()
-        val indices = Array.ofDim[Int](numFilled)
+        val indices   = Array.ofDim[Int](numFilled)
 
         for (i <- 0 until numFilled) {
           indices(i) = in.readInt()
@@ -103,7 +102,6 @@ package object knn {
     }
   }
 
-
   private[knn] implicit object IntVectorIndexItemSerializer extends ObjectSerializer[IntVectorIndexItem] {
     override def write(item: IntVectorIndexItem, out: ObjectOutput): Unit = {
       IntSerializer.write(item.id, out)
@@ -111,7 +109,7 @@ package object knn {
     }
 
     override def read(in: ObjectInput): IntVectorIndexItem = {
-      val id = IntSerializer.read(in)
+      val id     = IntSerializer.read(in)
       val vector = VectorSerializer.read(in)
       IntVectorIndexItem(id, vector)
     }
@@ -124,7 +122,7 @@ package object knn {
     }
 
     override def read(in: ObjectInput): LongVectorIndexItem = {
-      val id = LongSerializer.read(in)
+      val id     = LongSerializer.read(in)
       val vector = VectorSerializer.read(in)
       LongVectorIndexItem(id, vector)
     }
@@ -137,12 +135,11 @@ package object knn {
     }
 
     override def read(in: ObjectInput): StringVectorIndexItem = {
-      val id = StringSerializer.read(in)
+      val id     = StringSerializer.read(in)
       val vector = VectorSerializer.read(in)
       StringVectorIndexItem(id, vector)
     }
   }
-
 
   private[knn] implicit object IntFloatArrayIndexItemSerializer extends ObjectSerializer[IntFloatArrayIndexItem] {
     override def write(item: IntFloatArrayIndexItem, out: ObjectOutput): Unit = {
@@ -151,7 +148,7 @@ package object knn {
     }
 
     override def read(in: ObjectInput): IntFloatArrayIndexItem = {
-      val id = IntSerializer.read(in)
+      val id     = IntSerializer.read(in)
       val vector = FloatArraySerializer.read(in)
       IntFloatArrayIndexItem(id, vector)
     }
@@ -164,7 +161,7 @@ package object knn {
     }
 
     override def read(in: ObjectInput): LongFloatArrayIndexItem = {
-      val id = LongSerializer.read(in)
+      val id     = LongSerializer.read(in)
       val vector = FloatArraySerializer.read(in)
       LongFloatArrayIndexItem(id, vector)
     }
@@ -177,12 +174,11 @@ package object knn {
     }
 
     override def read(in: ObjectInput): StringFloatArrayIndexItem = {
-      val id = StringSerializer.read(in)
+      val id     = StringSerializer.read(in)
       val vector = FloatArraySerializer.read(in)
       StringFloatArrayIndexItem(id, vector)
     }
   }
-
 
   private[knn] implicit object IntDoubleArrayIndexItemSerializer extends ObjectSerializer[IntDoubleArrayIndexItem] {
     override def write(item: IntDoubleArrayIndexItem, out: ObjectOutput): Unit = {
@@ -191,7 +187,7 @@ package object knn {
     }
 
     override def read(in: ObjectInput): IntDoubleArrayIndexItem = {
-      val id = IntSerializer.read(in)
+      val id     = IntSerializer.read(in)
       val vector = DoubleArraySerializer.read(in)
       IntDoubleArrayIndexItem(id, vector)
     }
@@ -204,20 +200,21 @@ package object knn {
     }
 
     override def read(in: ObjectInput): LongDoubleArrayIndexItem = {
-      val id = LongSerializer.read(in)
+      val id     = LongSerializer.read(in)
       val vector = DoubleArraySerializer.read(in)
       LongDoubleArrayIndexItem(id, vector)
     }
   }
 
-  private[knn] implicit object StringDoubleArrayIndexItemSerializer extends ObjectSerializer[StringDoubleArrayIndexItem] {
+  private[knn] implicit object StringDoubleArrayIndexItemSerializer
+      extends ObjectSerializer[StringDoubleArrayIndexItem] {
     override def write(item: StringDoubleArrayIndexItem, out: ObjectOutput): Unit = {
       StringSerializer.write(item.id, out)
       DoubleArraySerializer.write(item.vector, out)
     }
 
     override def read(in: ObjectInput): StringDoubleArrayIndexItem = {
-      val id = StringSerializer.read(in)
+      val id     = StringSerializer.read(in)
       val vector = DoubleArraySerializer.read(in)
       StringDoubleArrayIndexItem(id, vector)
     }
