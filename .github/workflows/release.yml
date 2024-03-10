@@ -1,4 +1,5 @@
 name: Release pipeline
+run-name: Release of ${{ inputs.version }} by ${{ github.actor }}
 
 permissions:
   contents: write
