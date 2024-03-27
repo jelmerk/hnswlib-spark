@@ -17,6 +17,7 @@ eval "$PYTHON_VERSION -m venv "target/spark-$SPARK_VERSION-venv""
 source "target/spark-$SPARK_VERSION-venv/bin/activate"
 
 # install packages
+pip install wheel==0.42.0
 pip install pytest==7.4.3
 pip install 'pyspark[ml]'=="$SPARK_VERSION"
 
