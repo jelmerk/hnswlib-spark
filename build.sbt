@@ -42,8 +42,14 @@ lazy val noPublishSettings =
 
 val hnswLibVersion = "1.1.2"
 val sparkVersion = settingKey[String]("Spark version")
+val venvFolder = settingKey[String]("Venv folder")
+val pythonVersion = settingKey[String]("Python version")
 
-lazy val pyTest    = taskKey[Unit]("Run the python tests")
+lazy val createVirtualEnv = taskKey[Unit]("Create venv")
+lazy val pyTest           = taskKey[Unit]("Run the python tests")
+lazy val black            = taskKey[Unit]("Run the black code formatter")
+lazy val blackCheck       = taskKey[Unit]("Run the black code formatter in check mode")
+lazy val flake8           = taskKey[Unit]("Run the flake8 style enforcer")
 
 lazy val root = (project in file("."))
   .aggregate(hnswlibSpark)
@@ -78,16 +84,26 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
       _.withIncludeScala(false)
     },
     sparkVersion := sys.props.getOrElse("sparkVersion", "3.3.2"),
+    venvFolder := s"${baseDirectory.value}/.venv",
+    pythonVersion := (if (scalaVersion.value == "2.11.12") "python3.7" else "python3.9"),
+    createVirtualEnv := {
+      val ret = (
+        s"${pythonVersion.value} -m venv ${venvFolder.value}" #&&
+        s"${venvFolder.value}/bin/pip install wheel==0.42.0 pytest==7.4.3 pyspark[ml]==${sparkVersion.value} black==23.3.0 flake8==5.0.4"
+      ).!
+      require(ret == 0, "Creating venv failed")
+    },
     pyTest := {
       val log = streams.value.log
 
       val artifactPath = (Compile / assembly).value.getAbsolutePath
+      val venv = venvFolder.value
+
       if (scalaVersion.value == "2.12.18" && sparkVersion.value >= "3.0.0" || scalaVersion.value == "2.11.12") {
-        val pythonVersion = if (scalaVersion.value == "2.11.12") "python3.7" else "python3.9"
         val ret = Process(
-          Seq("./run-pyspark-tests.sh", sparkVersion.value, pythonVersion),
+          Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
-          extraEnv = "ARTIFACT_PATH" -> artifactPath
+          extraEnv = "ARTIFACT_PATH" -> artifactPath, "PYTHONPATH" -> s"${baseDirectory.value}/src/main/python"
         ).!
         require(ret == 0, "Python tests failed")
       } else {
@@ -95,11 +111,22 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
         log.info(s"Running pyTests for Scala ${scalaVersion.value} and Spark ${sparkVersion.value} is not supported.")
       }
     },
-    test := {
-      (Test / test).value
-      (Test / pyTest).value
+    pyTest := pyTest.dependsOn(assembly, createVirtualEnv).value,
+    blackCheck := {
+      val ret = s"${venvFolder.value}/bin/black --check ${baseDirectory.value}/src/main/python".!
+      require(ret == 0, "Black failed")
     },
-    pyTest := pyTest.dependsOn(assembly).value,
+    blackCheck := blackCheck.dependsOn(createVirtualEnv).value,
+    black := {
+      val ret = s"${venvFolder.value}/bin/black ${baseDirectory.value}/src/main/python".!
+      require(ret == 0, "Black failed")
+    },
+    black := black.dependsOn(createVirtualEnv).value,
+    flake8 := {
+      val ret = s"${venvFolder.value}/bin/flake8 ${baseDirectory.value}/src/main/python".!
+      require(ret == 0, "Flake8 failed")
+    },
+    flake8 := flake8.dependsOn(createVirtualEnv).value,
     libraryDependencies ++= Seq(
       "com.github.jelmerk" %  "hnswlib-utils"      % hnswLibVersion,
       "com.github.jelmerk" %  "hnswlib-core-jdk17" % hnswLibVersion,
