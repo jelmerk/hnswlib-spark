@@ -1,25 +1,44 @@
+# noinspection PyProtectedMember
 from pyspark.ml.evaluation import JavaEvaluator
-from pyspark.ml.param.shared import *
+from pyspark.ml.param.shared import Param
 from pyspark.mllib.common import inherit_doc
+
+# noinspection PyProtectedMember
 from pyspark import keyword_only
 from pyspark.ml.util import JavaMLReadable, JavaMLWritable
 
-__all__ = ['KnnSimilarityEvaluator']
+__all__ = ["KnnSimilarityEvaluator"]
 
+
+# noinspection PyPep8Naming
 @inherit_doc
 class KnnSimilarityEvaluator(JavaEvaluator, JavaMLReadable, JavaMLWritable):
     """
     Evaluate the performance of a knn model.
     """
+
     @keyword_only
-    def __init__(self, approximateNeighborsCol="approximateNeighbors", exactNeighborsCol="exactNeighbors"):
+    def __init__(
+        self,
+        approximateNeighborsCol="approximateNeighbors",
+        exactNeighborsCol="exactNeighbors",
+    ):
         super(JavaEvaluator, self).__init__()
-        self._java_obj = self._new_java_obj("com.github.jelmerk.spark.knn.evaluation.KnnSimilarityEvaluator", self.uid)
+        self._java_obj = self._new_java_obj(
+            "com.github.jelmerk.spark.knn.evaluation.KnnSimilarityEvaluator", self.uid
+        )
 
-        self.approximateNeighborsCol = Param(self, "approximateNeighborsCol", "the column name for the row identifier")
-        self.exactNeighborsCol = Param(self, "exactNeighborsCol", "the column name for the vector")
+        self.approximateNeighborsCol = Param(
+            self, "approximateNeighborsCol", "the column name for the row identifier"
+        )
+        self.exactNeighborsCol = Param(
+            self, "exactNeighborsCol", "the column name for the vector"
+        )
 
-        self._setDefault(approximateNeighborsCol="approximateNeighbors", exactNeighborsCol="exactNeighbors")
+        self._setDefault(
+            approximateNeighborsCol="approximateNeighbors",
+            exactNeighborsCol="exactNeighbors",
+        )
 
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
@@ -49,6 +68,10 @@ class KnnSimilarityEvaluator(JavaEvaluator, JavaMLReadable, JavaMLWritable):
         return self._set(exactNeighborsCol=value)
 
     @keyword_only
-    def setParams(self, approximateNeighborsCol="approximateNeighbors", exactNeighborsCol="exactNeighbors"):
+    def setParams(
+        self,
+        approximateNeighborsCol="approximateNeighbors",
+        exactNeighborsCol="exactNeighbors",
+    ):
         kwargs = self._input_kwargs
         return self._set(**kwargs)

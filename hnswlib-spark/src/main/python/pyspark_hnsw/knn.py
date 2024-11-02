@@ -1,18 +1,33 @@
-from pyspark.ml.wrapper import JavaEstimator, JavaModel, JavaParams
-from pyspark.ml.param.shared import *
+from pyspark.ml.wrapper import JavaEstimator, JavaModel
+from pyspark.ml.param.shared import (
+    Params,
+    Param,
+    HasFeaturesCol,
+    HasPredictionCol,
+    TypeConverters,
+)
 from pyspark.mllib.common import inherit_doc
+
+# noinspection PyProtectedMember
 from pyspark import keyword_only
 from pyspark.ml.util import JavaMLReadable, JavaMLWritable, MLReader, _jvm
 
-__all__ = ['HnswSimilarity', 'HnswSimilarityModel', 'BruteForceSimilarity', 'BruteForceSimilarityModel', 'HnswLibMLReader']
+__all__ = [
+    "HnswSimilarity",
+    "HnswSimilarityModel",
+    "BruteForceSimilarity",
+    "BruteForceSimilarityModel",
+    "HnswLibMLReader",
+]
+
 
 class HnswLibMLReader(MLReader):
-
     """
     Specialization of :py:class:`MLReader` for :py:class:`JavaParams` types
     """
 
     def __init__(self, clazz, java_class):
+        super().__init__()
         self._clazz = clazz
         self._jread = self._load_java_obj(java_class).read()
 
@@ -29,33 +44,69 @@ class HnswLibMLReader(MLReader):
             java_obj = getattr(java_obj, name)
         return java_obj
 
+
+# noinspection PyPep8Naming
 @inherit_doc
 class _KnnModelParams(HasFeaturesCol, HasPredictionCol):
     """
     Params for knn models.
     """
 
-    queryIdentifierCol = Param(Params._dummy(), "queryIdentifierCol", "the column name for the query identifier",
-                               typeConverter=TypeConverters.toString)
+    queryIdentifierCol = Param(
+        Params._dummy(),
+        "queryIdentifierCol",
+        "the column name for the query identifier",
+        typeConverter=TypeConverters.toString,
+    )
 
-    queryPartitionsCol = Param(Params._dummy(), "queryPartitionsCol", "the column name for the query partitions",
-                               typeConverter=TypeConverters.toString)
+    queryPartitionsCol = Param(
+        Params._dummy(),
+        "queryPartitionsCol",
+        "the column name for the query partitions",
+        typeConverter=TypeConverters.toString,
+    )
 
-    parallelism = Param(Params._dummy(), "parallelism", "number of threads to use", typeConverter=TypeConverters.toInt)
+    parallelism = Param(
+        Params._dummy(),
+        "parallelism",
+        "number of threads to use",
+        typeConverter=TypeConverters.toInt,
+    )
 
-    k = Param(Params._dummy(), "k", "number of neighbors to find", typeConverter=TypeConverters.toInt)
+    k = Param(
+        Params._dummy(),
+        "k",
+        "number of neighbors to find",
+        typeConverter=TypeConverters.toInt,
+    )
 
-    numReplicas = Param(Params._dummy(), "numReplicas", "number of index replicas to create when querying", typeConverter=TypeConverters.toInt)
+    numReplicas = Param(
+        Params._dummy(),
+        "numReplicas",
+        "number of index replicas to create when querying",
+        typeConverter=TypeConverters.toInt,
+    )
 
-    excludeSelf = Param(Params._dummy(), "excludeSelf", "whether to include the row identifier as a candidate neighbor",
-                        typeConverter=TypeConverters.toBoolean)
+    excludeSelf = Param(
+        Params._dummy(),
+        "excludeSelf",
+        "whether to include the row identifier as a candidate neighbor",
+        typeConverter=TypeConverters.toBoolean,
+    )
 
-    similarityThreshold = Param(Params._dummy(), "similarityThreshold",
-                                "do not return neighbors further away than this distance",
-                                typeConverter=TypeConverters.toFloat)
+    similarityThreshold = Param(
+        Params._dummy(),
+        "similarityThreshold",
+        "do not return neighbors further away than this distance",
+        typeConverter=TypeConverters.toFloat,
+    )
 
-    outputFormat = Param(Params._dummy(), "outputFormat", "output format, one of full, minimal",
-                         typeConverter=TypeConverters.toString)
+    outputFormat = Param(
+        Params._dummy(),
+        "outputFormat",
+        "output format, one of full, minimal",
+        typeConverter=TypeConverters.toString,
+    )
 
     def getQueryIdentifierCol(self):
         """
@@ -106,27 +157,49 @@ class _KnnModelParams(HasFeaturesCol, HasPredictionCol):
         return self.getOrDefault(self.numReplicas)
 
 
+# noinspection PyPep8Naming
 @inherit_doc
 class _KnnParams(_KnnModelParams):
     """
     Params for knn algorithms.
     """
 
-    identifierCol = Param(Params._dummy(), "identifierCol", "the column name for the row identifier",
-                          typeConverter=TypeConverters.toString)
+    identifierCol = Param(
+        Params._dummy(),
+        "identifierCol",
+        "the column name for the row identifier",
+        typeConverter=TypeConverters.toString,
+    )
 
-    partitionCol = Param(Params._dummy(), "partitionCol", "the column name for the partition",
-                         typeConverter=TypeConverters.toString)
+    partitionCol = Param(
+        Params._dummy(),
+        "partitionCol",
+        "the column name for the partition",
+        typeConverter=TypeConverters.toString,
+    )
 
-    initialModelPath = Param(Params._dummy(), "initialModelPath", "path to the initial model",
-                             typeConverter=TypeConverters.toString)
+    initialModelPath = Param(
+        Params._dummy(),
+        "initialModelPath",
+        "path to the initial model",
+        typeConverter=TypeConverters.toString,
+    )
 
-    numPartitions = Param(Params._dummy(), "numPartitions", "number of partitions", typeConverter=TypeConverters.toInt)
+    numPartitions = Param(
+        Params._dummy(),
+        "numPartitions",
+        "number of partitions",
+        typeConverter=TypeConverters.toInt,
+    )
 
-    distanceFunction = Param(Params._dummy(), "distanceFunction",
-                             "distance function, one of bray-curtis, canberra, cosine, correlation, " +
-                             "euclidean, inner-product, manhattan or the fully qualified classname " +
-                             "of a distance function", typeConverter=TypeConverters.toString)
+    distanceFunction = Param(
+        Params._dummy(),
+        "distanceFunction",
+        "distance function, one of bray-curtis, canberra, cosine, correlation, "
+        + "euclidean, inner-product, manhattan or the fully qualified classname "
+        + "of a distance function",
+        typeConverter=TypeConverters.toString,
+    )
 
     def getIdentifierCol(self):
         """
@@ -159,14 +232,19 @@ class _KnnParams(_KnnModelParams):
         return self.getOrDefault(self.distanceFunction)
 
 
+# noinspection PyPep8Naming
 @inherit_doc
 class _HnswModelParams(_KnnModelParams):
     """
     Params for :py:class:`Hnsw` and :py:class:`HnswModel`.
     """
 
-    ef = Param(Params._dummy(), "ef", "size of the dynamic list for the nearest neighbors (used during the search)",
-               typeConverter=TypeConverters.toInt)
+    ef = Param(
+        Params._dummy(),
+        "ef",
+        "size of the dynamic list for the nearest neighbors (used during the search)",
+        typeConverter=TypeConverters.toInt,
+    )
 
     def getEf(self):
         """
@@ -175,18 +253,26 @@ class _HnswModelParams(_KnnModelParams):
         return self.getOrDefault(self.ef)
 
 
+# noinspection PyPep8Naming
 @inherit_doc
 class _HnswParams(_HnswModelParams, _KnnParams):
     """
     Params for :py:class:`Hnsw`.
     """
 
-    m = Param(Params._dummy(), "m", "number of bi-directional links created for every new element during construction",
-              typeConverter=TypeConverters.toInt)
+    m = Param(
+        Params._dummy(),
+        "m",
+        "number of bi-directional links created for every new element during construction",
+        typeConverter=TypeConverters.toInt,
+    )
 
-    efConstruction = Param(Params._dummy(), "efConstruction",
-                           "has the same meaning as ef, but controls the index time / index precision",
-                           typeConverter=TypeConverters.toInt)
+    efConstruction = Param(
+        Params._dummy(),
+        "efConstruction",
+        "has the same meaning as ef, but controls the index time / index precision",
+        typeConverter=TypeConverters.toInt,
+    )
 
     def getM(self):
         """
@@ -201,6 +287,7 @@ class _HnswParams(_HnswModelParams, _KnnParams):
         return self.getOrDefault(self.efConstruction)
 
 
+# noinspection PyPep8Naming
 @inherit_doc
 class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWritable):
     """
@@ -208,15 +295,39 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
     """
 
     @keyword_only
-    def __init__(self, identifierCol="id", partitionCol=None, queryIdentifierCol=None, queryPartitionsCol=None,
-                 parallelism= None, featuresCol="features", predictionCol="prediction", numPartitions=1, numReplicas=0,
-                 k=5, distanceFunction="cosine", excludeSelf=False, similarityThreshold=-1.0, outputFormat="full",
-                 initialModelPath=None):
+    def __init__(
+        self,
+        identifierCol="id",
+        partitionCol=None,
+        queryIdentifierCol=None,
+        queryPartitionsCol=None,
+        parallelism=None,
+        featuresCol="features",
+        predictionCol="prediction",
+        numPartitions=1,
+        numReplicas=0,
+        k=5,
+        distanceFunction="cosine",
+        excludeSelf=False,
+        similarityThreshold=-1.0,
+        outputFormat="full",
+        initialModelPath=None,
+    ):
         super(BruteForceSimilarity, self).__init__()
-        self._java_obj = self._new_java_obj("com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarity", self.uid)
+        self._java_obj = self._new_java_obj(
+            "com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarity", self.uid
+        )
 
-        self._setDefault(identifierCol="id", numPartitions=1, numReplicas=0, k=5, distanceFunction="cosine",
-                         excludeSelf=False, similarityThreshold=-1.0, outputFormat="full")
+        self._setDefault(
+            identifierCol="id",
+            numPartitions=1,
+            numReplicas=0,
+            k=5,
+            distanceFunction="cosine",
+            excludeSelf=False,
+            similarityThreshold=-1.0,
+            outputFormat="full",
+        )
 
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
@@ -300,10 +411,23 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
         return self._set(initialModelPath=value)
 
     @keyword_only
-    def setParams(self, identifierCol="id", queryIdentifierCol=None, queryPartitionsCol=None, parallelism=None,
-                  featuresCol="features", predictionCol="prediction",numPartitions=1, numReplicas=0, k=5,
-                  distanceFunction="cosine", excludeSelf=False, similarityThreshold=-1.0, outputFormat="full",
-                  initialModelPath=None):
+    def setParams(
+        self,
+        identifierCol="id",
+        queryIdentifierCol=None,
+        queryPartitionsCol=None,
+        parallelism=None,
+        featuresCol="features",
+        predictionCol="prediction",
+        numPartitions=1,
+        numReplicas=0,
+        k=5,
+        distanceFunction="cosine",
+        excludeSelf=False,
+        similarityThreshold=-1.0,
+        outputFormat="full",
+        initialModelPath=None,
+    ):
         kwargs = self._input_kwargs
         return self._set(**kwargs)
 
@@ -311,12 +435,17 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
         return BruteForceSimilarityModel(java_model)
 
 
-class BruteForceSimilarityModel(JavaModel, _KnnModelParams, JavaMLReadable, JavaMLWritable):
+# noinspection PyPep8Naming
+class BruteForceSimilarityModel(
+    JavaModel, _KnnModelParams, JavaMLReadable, JavaMLWritable
+):
     """
     Model fitted by BruteForce.
     """
 
-    _classpath_model = 'com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarityModel'
+    _classpath_model = (
+        "com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarityModel"
+    )
 
     def setQueryIdentifierCol(self, value):
         """
@@ -371,6 +500,7 @@ class BruteForceSimilarityModel(JavaModel, _KnnModelParams, JavaMLReadable, Java
         return HnswLibMLReader(cls, cls._classpath_model)
 
 
+# noinspection PyPep8Naming
 @inherit_doc
 class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable):
     """
@@ -378,16 +508,45 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
     """
 
     @keyword_only
-    def __init__(self, identifierCol="id", queryIdentifierCol=None, queryPartitionsCol=None, parallelism=None,
-                 featuresCol="features", predictionCol="prediction", m=16, ef=10, efConstruction=200, numPartitions=1,
-                 numReplicas=0, k=5, distanceFunction="cosine", excludeSelf=False, similarityThreshold=-1.0,
-                 outputFormat="full", initialModelPath=None):
+    def __init__(
+        self,
+        identifierCol="id",
+        queryIdentifierCol=None,
+        queryPartitionsCol=None,
+        parallelism=None,
+        featuresCol="features",
+        predictionCol="prediction",
+        m=16,
+        ef=10,
+        efConstruction=200,
+        numPartitions=1,
+        numReplicas=0,
+        k=5,
+        distanceFunction="cosine",
+        excludeSelf=False,
+        similarityThreshold=-1.0,
+        outputFormat="full",
+        initialModelPath=None,
+    ):
         super(HnswSimilarity, self).__init__()
-        self._java_obj = self._new_java_obj("com.github.jelmerk.spark.knn.hnsw.HnswSimilarity", self.uid)
+        self._java_obj = self._new_java_obj(
+            "com.github.jelmerk.spark.knn.hnsw.HnswSimilarity", self.uid
+        )
 
-        self._setDefault(identifierCol="id", m=16, ef=10, efConstruction=200, numPartitions=1, numReplicas=0, k=5,
-                         distanceFunction="cosine", excludeSelf=False, similarityThreshold=-1.0, outputFormat="full",
-                         initialModelPath=None)
+        self._setDefault(
+            identifierCol="id",
+            m=16,
+            ef=10,
+            efConstruction=200,
+            numPartitions=1,
+            numReplicas=0,
+            k=5,
+            distanceFunction="cosine",
+            excludeSelf=False,
+            similarityThreshold=-1.0,
+            outputFormat="full",
+            initialModelPath=None,
+        )
 
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
@@ -489,10 +648,26 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         return self._set(initialModelPath=value)
 
     @keyword_only
-    def setParams(self, identifierCol="id", queryIdentifierCol=None, queryPartitionsCol=None, parallelism=None,
-                  featuresCol="features", predictionCol="prediction", m=16, ef=10, efConstruction=200, numPartitions=1,
-                  numReplicas=0, k=5, distanceFunction="cosine", excludeSelf=False, similarityThreshold=-1.0,
-                  outputFormat="full", initialModelPath=None):
+    def setParams(
+        self,
+        identifierCol="id",
+        queryIdentifierCol=None,
+        queryPartitionsCol=None,
+        parallelism=None,
+        featuresCol="features",
+        predictionCol="prediction",
+        m=16,
+        ef=10,
+        efConstruction=200,
+        numPartitions=1,
+        numReplicas=0,
+        k=5,
+        distanceFunction="cosine",
+        excludeSelf=False,
+        similarityThreshold=-1.0,
+        outputFormat="full",
+        initialModelPath=None,
+    ):
         kwargs = self._input_kwargs
         return self._set(**kwargs)
 
@@ -500,12 +675,13 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         return HnswSimilarityModel(java_model)
 
 
+# noinspection PyPep8Naming
 class HnswSimilarityModel(JavaModel, _HnswModelParams, JavaMLReadable, JavaMLWritable):
     """
     Model fitted by Hnsw.
     """
 
-    _classpath_model = 'com.github.jelmerk.spark.knn.hnsw.HnswSimilarityModel'
+    _classpath_model = "com.github.jelmerk.spark.knn.hnsw.HnswSimilarityModel"
 
     def setQueryIdentifierCol(self, value):
         """
