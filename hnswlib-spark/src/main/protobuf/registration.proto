@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.github.jelmerk.server;
+
+service RegistrationService {
+  rpc Register (RegisterRequest) returns ( RegisterResponse) {}
+}
+
+message RegisterRequest {
+  int32 partition_num = 1;
+  int32 replica_num = 2;
+  string host = 3;
+  int32 port = 4;
+}
+
+message RegisterResponse {
+}
+

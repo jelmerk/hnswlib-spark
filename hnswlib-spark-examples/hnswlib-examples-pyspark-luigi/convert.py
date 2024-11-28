@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import argparse
 
 from pyspark.ml.feature import VectorAssembler

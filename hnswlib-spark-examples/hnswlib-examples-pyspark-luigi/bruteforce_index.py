@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import argparse
 
 from pyspark.ml import Pipeline
@@ -14,13 +12,15 @@ def main(spark):
     parser.add_argument('--model', type=str)
     parser.add_argument('--output', type=str)
     parser.add_argument('--num_partitions', type=int)
+    parser.add_argument('--num_threads', type=int)
 
     args = parser.parse_args()
 
     normalizer = Normalizer(inputCol='features', outputCol='normalized_features')
 
     bruteforce = BruteForceSimilarity(identifierCol='id', featuresCol='normalized_features',
-                                      distanceFunction='inner-product', numPartitions=args.num_partitions)
+                                      distanceFunction='inner-product', numPartitions=args.num_partitions,
+                                      numThreads=args.num_threads)
 
     pipeline = Pipeline(stages=[normalizer, bruteforce])
 

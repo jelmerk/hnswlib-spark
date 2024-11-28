@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import urllib.request
 import shutil
 
 import luigi
+import multiprocessing
 from luigi import FloatParameter, IntParameter, LocalTarget, Parameter
 from luigi.contrib.spark import SparkSubmitTask
 from luigi.format import Nop
@@ -11,6 +10,10 @@ from luigi.contrib.external_program import ExternalProgramTask
 # from luigi.contrib.hdfs import HdfsFlagTarget
 # from luigi.contrib.s3 import S3FlagTarget
 
+JAR='/Users/jelmerkuperus/dev/3rdparty/hnswlib-spark-old/hnswlib-spark/target/scala-2.12/hnswlib-spark-uberjar_3_4-assembly-1.1.2+6-793bae01+20250111-0846-SNAPSHOT.jar'
+
+multiprocessing.set_start_method("fork", force=True)
+num_cores=multiprocessing.cpu_count()
 
 class Download(luigi.Task):
     """
@@ -63,13 +66,14 @@ class Convert(SparkSubmitTask):
 
     # executor_memory = '4g'
 
-    num_executors = IntParameter(default=2)
+    num_executors = IntParameter(default=1)
 
     name = 'Convert'
 
     app = 'convert.py'
 
-    packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    jars = [JAR]
 
     def requires(self):
         return Unzip()
@@ -101,15 +105,18 @@ class HnswIndex(SparkSubmitTask):
 
     # executor_memory = '12g'
 
-    num_executors = IntParameter(default=2)
+    num_executors = IntParameter(default=1)
 
-    executor_cores = IntParameter(default=2)
+    executor_cores = IntParameter(default=num_cores)
 
     name = 'Hnsw index'
 
     app = 'hnsw_index.py'
 
-    packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    capture_output = False
+
+    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    jars = [JAR]
 
     m = IntParameter(default=16)
 
@@ -117,15 +124,8 @@ class HnswIndex(SparkSubmitTask):
 
     @property
     def conf(self):
-        return {'spark.dynamicAllocation.enabled': 'false',
-                'spark.speculation': 'false',
-                'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.task.cpus': str(self.executor_cores),
-                'spark.task.maxFailures': '1',
-                'spark.scheduler.minRegisteredResourcesRatio': '1.0',
-                'spark.scheduler.maxRegisteredResourcesWaitingTime': '3600s',
-                'spark.hnswlib.settings.index.cache_folder': '/tmp'}
+        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
 
     def requires(self):
         return Convert()
@@ -136,7 +136,8 @@ class HnswIndex(SparkSubmitTask):
             '--output', self.output().path,
             '--m', self.m,
             '--ef_construction', self.ef_construction,
-            '--num_partitions', str(self.num_executors)
+            '--num_partitions', 1,
+            '--num_threads', num_cores
         ]
 
     def output(self):
@@ -160,11 +161,14 @@ class Query(SparkSubmitTask):
 
     # executor_memory = '10g'
 
-    num_executors = IntParameter(default=4)
+    capture_output = False
 
-    executor_cores = IntParameter(default=2)
+    num_executors = IntParameter(default=1)
 
-    packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    executor_cores = IntParameter(default=num_cores)
+
+    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    jars = [JAR]
 
     name = 'Query index'
 
@@ -172,20 +176,10 @@ class Query(SparkSubmitTask):
 
     k = IntParameter(default=10)
 
-    ef = IntParameter(default=100)
-
-    num_replicas = IntParameter(default=1)
-
     @property
     def conf(self):
-        return {'spark.dynamicAllocation.enabled': 'false',
-                'spark.speculation': 'false',
-                'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.task.cpus': str(self.executor_cores),
-                'spark.task.maxFailures': '1',
-                'spark.scheduler.minRegisteredResourcesRatio': '1.0',
-                'spark.scheduler.maxRegisteredResourcesWaitingTime': '3600s'}
+        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
 
     def requires(self):
         return {'vectors': Convert(),
@@ -196,9 +190,7 @@ class Query(SparkSubmitTask):
             '--input', self.input()['vectors'].path,
             '--model', self.input()['index'].path,
             '--output', self.output().path,
-            '--ef', self.ef,
-            '--k', self.k,
-            '--num_replicas', self.num_replicas
+            '--k', self.k
         ]
 
     def output(self):
@@ -222,27 +214,23 @@ class BruteForceIndex(SparkSubmitTask):
 
     # executor_memory = '12g'
 
-    num_executors = IntParameter(default=2)
+    num_executors = IntParameter(default=1)
 
-    executor_cores = IntParameter(default=2)
+    executor_cores = IntParameter(default=num_cores)
 
     name = 'Brute force index'
 
     app = 'bruteforce_index.py'
 
-    packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    jars = [JAR]
+
+    env = { "SPARK_TESTING": "1" } # needs to be set when using local spark
 
     @property
     def conf(self):
-        return {'spark.dynamicAllocation.enabled': 'false',
-                'spark.speculation': 'false',
-                'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.task.cpus': str(self.executor_cores),
-                'spark.task.maxFailures': '1',
-                'spark.scheduler.minRegisteredResourcesRatio': '1.0',
-                'spark.scheduler.maxRegisteredResourcesWaitingTime': '3600s',
-                'spark.hnswlib.settings.index.cache_folder': '/tmp'}
+        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
 
     def requires(self):
         return Convert()
@@ -251,7 +239,8 @@ class BruteForceIndex(SparkSubmitTask):
         return [
             '--input', self.input().path,
             '--output', self.output().path,
-            '--num_partitions', str(self.num_executors)
+            '--num_partitions', 1,
+            '--num_threads', num_cores
         ]
 
     def output(self):
@@ -275,13 +264,11 @@ class Evaluate(SparkSubmitTask):
 
     # executor_memory = '12g'
 
-    num_executors = IntParameter(default=2)
+    num_executors = IntParameter(default=1)
 
-    executor_cores = IntParameter(default=2)
+    executor_cores = IntParameter(default=num_cores)
 
     k = IntParameter(default=10)
-
-    ef = IntParameter(default=100)
 
     fraction = FloatParameter(default=0.0001)
 
@@ -291,18 +278,13 @@ class Evaluate(SparkSubmitTask):
 
     app = 'evaluate_performance.py'
 
-    packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
+    jars = [JAR]
 
     @property
     def conf(self):
-        return {'spark.dynamicAllocation.enabled': 'false',
-                'spark.speculation': 'false',
-                'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.task.cpus': str(self.executor_cores),
-                'spark.task.maxFailures': '1',
-                'spark.scheduler.minRegisteredResourcesRatio': '1.0',
-                'spark.scheduler.maxRegisteredResourcesWaitingTime': '3600s'}
+        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
 
     def requires(self):
         return {'vectors': Convert(),
@@ -315,7 +297,6 @@ class Evaluate(SparkSubmitTask):
             '--output', self.output().path,
             '--hnsw_model', self.input()['hnsw_index'].path,
             '--bruteforce_model', self.input()['bruteforce_index'].path,
-            '--ef', self.ef,
             '--k', self.k,
             '--seed', self.seed,
             '--fraction', self.fraction,

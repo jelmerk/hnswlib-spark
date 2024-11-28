@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import argparse
 
 from pyspark.ml import PipelineModel
@@ -14,7 +12,6 @@ def main(spark):
     parser.add_argument('--input', type=str)
     parser.add_argument('--output', type=str)
     parser.add_argument('--k', type=int)
-    parser.add_argument('--ef', type=int)
     parser.add_argument('--fraction', type=float)
     parser.add_argument('--seed', type=int)
 
@@ -25,17 +22,14 @@ def main(spark):
     hnsw_model = PipelineModel.read().load(args.hnsw_model)
 
     hnsw_stage = hnsw_model.stages[-1]
-    hnsw_stage.setEf(args.ef)
     hnsw_stage.setK(args.k)
     hnsw_stage.setPredictionCol('approximate')
-    hnsw_stage.setOutputFormat('full')
 
     bruteforce_model = PipelineModel.read().load(args.bruteforce_model)
 
     bruteforce_stage = bruteforce_model.stages[-1]
     bruteforce_stage.setK(args.k)
     bruteforce_stage.setPredictionCol('exact')
-    bruteforce_stage.setOutputFormat('full')
 
     sample_results = bruteforce_model.transform(hnsw_model.transform(sample_query_items))
 
