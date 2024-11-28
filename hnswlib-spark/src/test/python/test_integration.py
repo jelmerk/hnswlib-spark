@@ -11,7 +11,7 @@ def test_incremental_models(spark, tmp_path):
         [1, Vectors.dense([0.1, 0.2, 0.3])]
     ], ['id', 'features'])
 
-    hnsw1 = HnswSimilarity()
+    hnsw1 = HnswSimilarity(numPartitions=2, numThreads=1)
 
     model1 = hnsw1.fit(df1)
 
@@ -21,7 +21,7 @@ def test_incremental_models(spark, tmp_path):
         [2, Vectors.dense([0.9, 0.1, 0.2])]
     ], ['id', 'features'])
 
-    hnsw2 = HnswSimilarity(initialModelPath=tmp_path.as_posix())
+    hnsw2 = HnswSimilarity(numPartitions=2, numThreads=1, initialModelPath=tmp_path.as_posix())
 
     model2 = hnsw2.fit(df2)
 

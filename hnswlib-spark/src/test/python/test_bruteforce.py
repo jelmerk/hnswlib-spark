@@ -12,9 +12,8 @@ def test_bruteforce(spark):
         [3, Vectors.dense([0.2, 0.1])],
     ], ['row_id', 'features'])
 
-    bruteforce = BruteForceSimilarity(identifierCol='row_id', queryIdentifierCol='row_id', featuresCol='features',
-                                      distanceFunction='cosine', numPartitions=100, excludeSelf=False,
-                                      similarityThreshold=-1.0)
+    bruteforce = BruteForceSimilarity(identifierCol='row_id', featuresCol='features',
+                                      distanceFunction='cosine', numPartitions=2, numThreads=1)
 
     model = bruteforce.fit(df)
 

@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+
+package com.github.jelmerk.server;
+
+service IndexService {
+  rpc Search (stream SearchRequest) returns (stream SearchResponse) {}
+  rpc SaveIndex (SaveIndexRequest) returns (SaveIndexResponse) {}
+}
+
+message SearchRequest {
+
+  oneof vector {
+    FloatArrayVector float_array_vector = 4;
+    DoubleArrayVector double_array_vector = 5;
+    SparseVector sparse_vector = 6;
+    DenseVector dense_vector = 7;
+  }
+
+  int32 k = 8;
+}
+
+message SearchResponse {
+  repeated Result results = 1;
+}
+
+message Result {
+  oneof id {
+    string string_id = 1;
+    int64 long_id = 2;
+    int32 int_id = 3;
+  }
+
+  oneof distance {
+    float float_distance = 4;
+    double double_distance = 5;
+  }
+}
+
+message FloatArrayVector {
+  repeated float values = 1 [(scalapb.field).collection_type="Array"];
+}
+
+message DoubleArrayVector {
+  repeated double values = 1 [(scalapb.field).collection_type="Array"];
+}
+
+message SparseVector {
+  int32 size = 1;
+  repeated int32 indices = 2 [(scalapb.field).collection_type="Array"];
+  repeated double values = 3 [(scalapb.field).collection_type="Array"];
+}
+
+message DenseVector {
+  repeated double values = 1 [(scalapb.field).collection_type="Array"];
+}
+
+message SaveIndexRequest {
+  string path = 1;
+}
+
+message SaveIndexResponse {
+  int64 bytes_written = 1;
+}

@@ -1,5 +1,6 @@
-import Path.relativeTo
 import sys.process.*
+import scalapb.compiler.Version.scalapbVersion
+import scalapb.compiler.Version.grpcJavaVersion
 
 ThisBuild / organization := "com.github.jelmerk"
 ThisBuild / scalaVersion := "2.12.18"
@@ -9,6 +10,8 @@ ThisBuild / fork := true
 ThisBuild / dynverSonatypeSnapshots := true
 
 ThisBuild / versionScheme := Some("early-semver")
+
+ThisBuild / resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository"
 
 lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
@@ -40,7 +43,7 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-val hnswLibVersion = "1.1.2"
+val hnswLibVersion = "1.1.3"
 val sparkVersion = settingKey[String]("Spark version")
 val venvFolder = settingKey[String]("Venv folder")
 val pythonVersion = settingKey[String]("Python version")
@@ -52,30 +55,26 @@ lazy val blackCheck       = taskKey[Unit]("Run the black code formatter in check
 lazy val flake8           = taskKey[Unit]("Run the flake8 style enforcer")
 
 lazy val root = (project in file("."))
-  .aggregate(hnswlibSpark)
+  .aggregate(uberJar, cosmetic)
   .settings(noPublishSettings)
 
-lazy val hnswlibSpark = (project in file("hnswlib-spark"))
+lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
-    name := s"hnswlib-spark_${sparkVersion.value.split('.').take(2).mkString("_")}",
-    publishSettings,
-    crossScalaVersions := {
-      if (sparkVersion.value >= "3.2.0") {
-        Seq("2.12.18", "2.13.10")
-      } else if (sparkVersion.value >= "3.0.0") {
-        Seq("2.12.18")
-      } else {
-        Seq("2.12.18", "2.11.12")
+    name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
+    noPublishSettings,
+    crossScalaVersions := Seq("2.12.18", "2.13.10"),
+    autoScalaLibrary := false,
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
+    Compile / unmanagedResources / includeFilter := {
+      val pythonSrcDir = baseDirectory.value / "src" / "main" / "python"
+      (file: File) => {
+        if (file.getAbsolutePath.startsWith(pythonSrcDir.getAbsolutePath)) file.getName.endsWith(".py")
+        else true
       }
     },
-    autoScalaLibrary := false,
     Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "python",
-    Compile / packageBin / mappings ++= {
-      val base = baseDirectory.value / "src" / "main" / "python"
-      val srcs = base ** "*.py"
-      srcs pair relativeTo(base)
-    },
+    Test / envVars += "SPARK_TESTING" -> "1",
     Compile / doc / javacOptions ++= {
       Seq("-Xdoclint:none")
     },
@@ -83,9 +82,24 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
     assembly / assemblyOption ~= {
       _.withIncludeScala(false)
     },
-    sparkVersion := sys.props.getOrElse("sparkVersion", "3.3.2"),
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
+      case x =>
+        val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
+        oldStrategy(x)
+    },
+    assembly / assemblyShadeRules := Seq(
+      ShadeRule.rename("google.**" -> "shaded.google.@1").inAll,
+      ShadeRule.rename("com.google.**" -> "shaded.com.google.@1").inAll,
+      ShadeRule.rename("io.grpc.**" -> "shaded.io.grpc.@1").inAll,
+      ShadeRule.rename("io.netty.**" -> "shaded.io.netty.@1").inAll
+    ),
+    Compile / PB.targets := Seq(
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+    ),
+    sparkVersion := sys.props.getOrElse("sparkVersion", "3.4.1"),
     venvFolder := s"${baseDirectory.value}/.venv",
-    pythonVersion := (if (scalaVersion.value == "2.11.12") "python3.7" else "python3.9"),
+    pythonVersion := "python3.9",
     createVirtualEnv := {
       val ret = (
         s"${pythonVersion.value} -m venv ${venvFolder.value}" #&&
@@ -103,7 +117,7 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
         val ret = Process(
           Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
-          extraEnv = "ARTIFACT_PATH" -> artifactPath, "PYTHONPATH" -> s"${baseDirectory.value}/src/main/python"
+          extraEnv = "ARTIFACT_PATH" -> artifactPath, "PYTHONPATH" -> s"${baseDirectory.value}/src/main/python", "SPARK_TESTING" -> "1"
         ).!
         require(ret == 0, "Python tests failed")
       } else {
@@ -128,12 +142,31 @@ lazy val hnswlibSpark = (project in file("hnswlib-spark"))
     },
     flake8 := flake8.dependsOn(createVirtualEnv).value,
     libraryDependencies ++= Seq(
-      "com.github.jelmerk" %  "hnswlib-utils"      % hnswLibVersion,
-      "com.github.jelmerk" %  "hnswlib-core-jdk17" % hnswLibVersion,
-      "com.github.jelmerk" %% "hnswlib-scala"      % hnswLibVersion,
-      "org.apache.spark"   %% "spark-hive"         % sparkVersion.value             % Provided,
-      "org.apache.spark"   %% "spark-mllib"        % sparkVersion.value             % Provided,
-      "com.holdenkarau"    %% "spark-testing-base" % s"${sparkVersion.value}_1.4.7" % Test,
-      "org.scalatest"      %% "scalatest"          % "3.2.17"                       % Test
+      "com.github.jelmerk"   %  "hnswlib-utils"        % hnswLibVersion,
+      "com.github.jelmerk"   %  "hnswlib-core-jdk17"   % hnswLibVersion,
+      "com.github.jelmerk"   %% "hnswlib-scala"        % hnswLibVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime"      % scalapbVersion % "protobuf",
+      "io.grpc"              %  "grpc-netty"           % grpcJavaVersion,
+      "org.apache.spark"     %% "spark-hive"           % sparkVersion.value             % Provided,
+      "org.apache.spark"     %% "spark-mllib"          % sparkVersion.value             % Provided,
+      "com.holdenkarau"      %% "spark-testing-base"   % s"${sparkVersion.value}_1.4.7" % Test,
+      "org.scalatest"        %% "scalatest"            % "3.2.17"                       % Test
     )
+  )
+
+// spark cannot resolve artifacts with classifiers so we replace the main artifact
+//
+// See: https://issues.apache.org/jira/browse/SPARK-20075
+// See: https://github.com/sbt/sbt-assembly/blob/develop/README.md#q-despite-the-concerned-friends-i-still-want-publish-%C3%BCber-jars-what-advice-do-you-have
+lazy val cosmetic = project
+  .settings(
+    name                                   := s"hnswlib-spark_${sparkVersion.value.split('.').take(2).mkString("_")}",
+    Compile / packageBin                   := (uberJar / assembly).value,
+    Compile / packageDoc                   := (uberJar / Compile / packageDoc).value,
+    Compile / packageSrc                   := (uberJar / Compile / packageSrc).value,
+    autoScalaLibrary                       := false,
+    crossScalaVersions                     := Seq("2.12.18", "2.13.10"),
+    sparkVersion                           := sys.props.getOrElse("sparkVersion", "3.4.1"),
+    publishSettings
   )

@@ -13,7 +13,7 @@ def test_hnsw(spark):
     ], ['row_id', 'features'])
 
     hnsw = HnswSimilarity(identifierCol='row_id', featuresCol='features', distanceFunction='cosine', m=32, ef=5, k=5,
-                          efConstruction=200, numPartitions=100, excludeSelf=False, similarityThreshold=-1.0)
+                          efConstruction=200, numPartitions=2, numThreads=1)
 
     model = hnsw.fit(df)
 

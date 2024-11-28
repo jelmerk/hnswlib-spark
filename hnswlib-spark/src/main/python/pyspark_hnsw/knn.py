@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from pyspark.ml.wrapper import JavaEstimator, JavaModel
 from pyspark.ml.param.shared import (
     Params,
@@ -10,7 +12,10 @@ from pyspark.mllib.common import inherit_doc
 
 # noinspection PyProtectedMember
 from pyspark import keyword_only
+
+# noinspection PyProtectedMember
 from pyspark.ml.util import JavaMLReadable, JavaMLWritable, MLReader, _jvm
+
 
 __all__ = [
     "HnswSimilarity",
@@ -19,6 +24,12 @@ __all__ = [
     "BruteForceSimilarityModel",
     "HnswLibMLReader",
 ]
+
+
+class KnnModel(JavaModel):
+    def dispose(self):
+        assert self._java_obj is not None
+        return self._java_obj.dispose()
 
 
 class HnswLibMLReader(MLReader):
@@ -31,6 +42,7 @@ class HnswLibMLReader(MLReader):
         self._clazz = clazz
         self._jread = self._load_java_obj(java_class).read()
 
+    # noinspection PyProtectedMember
     def load(self, path):
         """Load the ML instance from the input path."""
         java_obj = self._jread.load(path)
@@ -52,25 +64,11 @@ class _KnnModelParams(HasFeaturesCol, HasPredictionCol):
     Params for knn models.
     """
 
-    queryIdentifierCol = Param(
-        Params._dummy(),
-        "queryIdentifierCol",
-        "the column name for the query identifier",
-        typeConverter=TypeConverters.toString,
-    )
-
     queryPartitionsCol = Param(
         Params._dummy(),
         "queryPartitionsCol",
         "the column name for the query partitions",
         typeConverter=TypeConverters.toString,
-    )
-
-    parallelism = Param(
-        Params._dummy(),
-        "parallelism",
-        "number of threads to use",
-        typeConverter=TypeConverters.toInt,
     )
 
     k = Param(
@@ -80,81 +78,17 @@ class _KnnModelParams(HasFeaturesCol, HasPredictionCol):
         typeConverter=TypeConverters.toInt,
     )
 
-    numReplicas = Param(
-        Params._dummy(),
-        "numReplicas",
-        "number of index replicas to create when querying",
-        typeConverter=TypeConverters.toInt,
-    )
-
-    excludeSelf = Param(
-        Params._dummy(),
-        "excludeSelf",
-        "whether to include the row identifier as a candidate neighbor",
-        typeConverter=TypeConverters.toBoolean,
-    )
-
-    similarityThreshold = Param(
-        Params._dummy(),
-        "similarityThreshold",
-        "do not return neighbors further away than this distance",
-        typeConverter=TypeConverters.toFloat,
-    )
-
-    outputFormat = Param(
-        Params._dummy(),
-        "outputFormat",
-        "output format, one of full, minimal",
-        typeConverter=TypeConverters.toString,
-    )
-
-    def getQueryIdentifierCol(self):
-        """
-        Gets the value of queryIdentifierCol or its default value.
-        """
-        return self.getOrDefault(self.queryIdentifierCol)
-
     def getQueryPartitionsCol(self):
         """
         Gets the value of queryPartitionsCol or its default value.
         """
         return self.getOrDefault(self.queryPartitionsCol)
 
-    def getParallelism(self):
-        """
-        Gets the value of parallelism or its default value.
-        """
-        return self.getOrDefault(self.parallelism)
-
     def getK(self):
         """
         Gets the value of k or its default value.
         """
         return self.getOrDefault(self.k)
-
-    def getExcludeSelf(self):
-        """
-        Gets the value of excludeSelf or its default value.
-        """
-        return self.getOrDefault(self.excludeSelf)
-
-    def getSimilarityThreshold(self):
-        """
-        Gets the value of similarityThreshold or its default value.
-        """
-        return self.getOrDefault(self.similarityThreshold)
-
-    def getOutputFormat(self):
-        """
-        Gets the value of outputFormat or its default value.
-        """
-        return self.getOrDefault(self.outputFormat)
-
-    def getNumReplicas(self):
-        """
-        Gets the value of numReplicas or its default value.
-        """
-        return self.getOrDefault(self.numReplicas)
 
 
 # noinspection PyPep8Naming
@@ -163,6 +97,20 @@ class _KnnParams(_KnnModelParams):
     """
     Params for knn algorithms.
     """
+
+    numThreads = Param(
+        Params._dummy(),
+        "numThreads",
+        "number of threads to use",
+        typeConverter=TypeConverters.toInt,
+    )
+
+    numReplicas = Param(
+        Params._dummy(),
+        "numReplicas",
+        "number of index replicas to create when querying",
+        typeConverter=TypeConverters.toInt,
+    )
 
     identifierCol = Param(
         Params._dummy(),
@@ -200,6 +148,18 @@ class _KnnParams(_KnnModelParams):
         + "of a distance function",
         typeConverter=TypeConverters.toString,
     )
+
+    def getNumThreads(self) -> int:
+        """
+        Gets the value of numThreads.
+        """
+        return self.getOrDefault(self.numThreads)
+
+    def getNumReplicas(self) -> int:
+        """
+        Gets the value of numReplicas or its default value.
+        """
+        return self.getOrDefault(self.numReplicas)
 
     def getIdentifierCol(self):
         """
@@ -239,19 +199,6 @@ class _HnswModelParams(_KnnModelParams):
     Params for :py:class:`Hnsw` and :py:class:`HnswModel`.
     """
 
-    ef = Param(
-        Params._dummy(),
-        "ef",
-        "size of the dynamic list for the nearest neighbors (used during the search)",
-        typeConverter=TypeConverters.toInt,
-    )
-
-    def getEf(self):
-        """
-        Gets the value of ef or its default value.
-        """
-        return self.getOrDefault(self.ef)
-
 
 # noinspection PyPep8Naming
 @inherit_doc
@@ -259,6 +206,13 @@ class _HnswParams(_HnswModelParams, _KnnParams):
     """
     Params for :py:class:`Hnsw`.
     """
+
+    ef = Param(
+        Params._dummy(),
+        "ef",
+        "size of the dynamic list for the nearest neighbors (used during the search)",
+        typeConverter=TypeConverters.toInt,
+    )
 
     m = Param(
         Params._dummy(),
@@ -273,6 +227,12 @@ class _HnswParams(_HnswModelParams, _KnnParams):
         "has the same meaning as ef, but controls the index time / index precision",
         typeConverter=TypeConverters.toInt,
     )
+
+    def getEf(self):
+        """
+        Gets the value of ef or its default value.
+        """
+        return self.getOrDefault(self.ef)
 
     def getM(self):
         """
@@ -294,23 +254,22 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
     Exact nearest neighbour search.
     """
 
+    _input_kwargs: Dict[str, Any]
+
+    # noinspection PyUnusedLocal
     @keyword_only
     def __init__(
         self,
         identifierCol="id",
         partitionCol=None,
-        queryIdentifierCol=None,
         queryPartitionsCol=None,
-        parallelism=None,
+        numThreads=None,
         featuresCol="features",
         predictionCol="prediction",
-        numPartitions=1,
+        numPartitions=None,
         numReplicas=0,
         k=5,
         distanceFunction="cosine",
-        excludeSelf=False,
-        similarityThreshold=-1.0,
-        outputFormat="full",
         initialModelPath=None,
     ):
         super(BruteForceSimilarity, self).__init__()
@@ -324,9 +283,6 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
             numReplicas=0,
             k=5,
             distanceFunction="cosine",
-            excludeSelf=False,
-            similarityThreshold=-1.0,
-            outputFormat="full",
         )
 
         kwargs = self._input_kwargs
@@ -337,12 +293,6 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
         Sets the value of :py:attr:`identifierCol`.
         """
         return self._set(identifierCol=value)
-
-    def setQueryIdentifierCol(self, value):
-        """
-        Sets the value of :py:attr:`queryIdentifierCol`.
-        """
-        return self._set(queryIdentifierCol=value)
 
     def setPartitionCol(self, value):
         """
@@ -356,11 +306,11 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
         """
         return self._set(queryPartitionsCol=value)
 
-    def setParallelism(self, value):
+    def setNumThreads(self, value):
         """
-        Sets the value of :py:attr:`parallelism`.
+        Sets the value of :py:attr:`numThreads`.
         """
-        return self._set(parallelism=value)
+        return self._set(numThreads=value)
 
     def setNumPartitions(self, value):
         """
@@ -386,46 +336,25 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
         """
         return self._set(distanceFunction=value)
 
-    def setExcludeSelf(self, value):
-        """
-        Sets the value of :py:attr:`excludeSelf`.
-        """
-        return self._set(excludeSelf=value)
-
-    def setSimilarityThreshold(self, value):
-        """
-        Sets the value of :py:attr:`similarityThreshold`.
-        """
-        return self._set(similarityThreshold=value)
-
-    def setOutputFormat(self, value):
-        """
-        Sets the value of :py:attr:`outputFormat`.
-        """
-        return self._set(outputFormat=value)
-
     def setInitialModelPath(self, value):
         """
         Sets the value of :py:attr:`initialModelPath`.
         """
         return self._set(initialModelPath=value)
 
+    # noinspection PyUnusedLocal
     @keyword_only
     def setParams(
         self,
         identifierCol="id",
-        queryIdentifierCol=None,
         queryPartitionsCol=None,
-        parallelism=None,
+        numThreads=None,
         featuresCol="features",
         predictionCol="prediction",
         numPartitions=1,
         numReplicas=0,
         k=5,
         distanceFunction="cosine",
-        excludeSelf=False,
-        similarityThreshold=-1.0,
-        outputFormat="full",
         initialModelPath=None,
     ):
         kwargs = self._input_kwargs
@@ -437,7 +366,7 @@ class BruteForceSimilarity(JavaEstimator, _KnnParams, JavaMLReadable, JavaMLWrit
 
 # noinspection PyPep8Naming
 class BruteForceSimilarityModel(
-    JavaModel, _KnnModelParams, JavaMLReadable, JavaMLWritable
+    KnnModel, _KnnModelParams, JavaMLReadable, JavaMLWritable
 ):
     """
     Model fitted by BruteForce.
@@ -447,53 +376,17 @@ class BruteForceSimilarityModel(
         "com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarityModel"
     )
 
-    def setQueryIdentifierCol(self, value):
-        """
-        Sets the value of :py:attr:`queryIdentifierCol`.
-        """
-        return self._set(queryIdentifierCol=value)
-
     def setQueryPartitionsCol(self, value):
         """
         Sets the value of :py:attr:`queryPartitionsCol`.
         """
         return self._set(queryPartitionsCol=value)
 
-    def setParallelism(self, value):
-        """
-        Sets the value of :py:attr:`parallelism`.
-        """
-        return self._set(parallelism=value)
-
     def setK(self, value):
         """
         Sets the value of :py:attr:`k`.
         """
         return self._set(k=value)
-
-    def setExcludeSelf(self, value):
-        """
-        Sets the value of :py:attr:`excludeSelf`.
-        """
-        return self._set(excludeSelf=value)
-
-    def setSimilarityThreshold(self, value):
-        """
-        Sets the value of :py:attr:`similarityThreshold`.
-        """
-        return self._set(similarityThreshold=value)
-
-    def setOutputFormat(self, value):
-        """
-        Sets the value of :py:attr:`outputFormat`.
-        """
-        return self._set(outputFormat=value)
-
-    def setNumReplicas(self, value):
-        """
-        Sets the value of :py:attr:`numReplicas`.
-        """
-        return self._set(numReplicas=value)
 
     @classmethod
     def read(cls):
@@ -507,13 +400,14 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
     Approximate nearest neighbour search.
     """
 
+    # noinspection PyUnusedLocal
     @keyword_only
     def __init__(
         self,
         identifierCol="id",
-        queryIdentifierCol=None,
+        partitionCol=None,
         queryPartitionsCol=None,
-        parallelism=None,
+        numThreads=None,
         featuresCol="features",
         predictionCol="prediction",
         m=16,
@@ -523,9 +417,6 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         numReplicas=0,
         k=5,
         distanceFunction="cosine",
-        excludeSelf=False,
-        similarityThreshold=-1.0,
-        outputFormat="full",
         initialModelPath=None,
     ):
         super(HnswSimilarity, self).__init__()
@@ -542,9 +433,6 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
             numReplicas=0,
             k=5,
             distanceFunction="cosine",
-            excludeSelf=False,
-            similarityThreshold=-1.0,
-            outputFormat="full",
             initialModelPath=None,
         )
 
@@ -556,12 +444,6 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         Sets the value of :py:attr:`identifierCol`.
         """
         return self._set(identifierCol=value)
-
-    def setQueryIdentifierCol(self, value):
-        """
-        Sets the value of :py:attr:`queryIdentifierCol`.
-        """
-        return self._set(queryIdentifierCol=value)
 
     def setPartitionCol(self, value):
         """
@@ -575,11 +457,11 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         """
         return self._set(queryPartitionsCol=value)
 
-    def setParallelism(self, value):
+    def setNumThreads(self, value):
         """
-        Sets the value of :py:attr:`parallelism`.
+        Sets the value of :py:attr:`numThreads`.
         """
-        return self._set(parallelism=value)
+        return self._set(numThreads=value)
 
     def setNumPartitions(self, value):
         """
@@ -604,24 +486,6 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         Sets the value of :py:attr:`distanceFunction`.
         """
         return self._set(distanceFunction=value)
-
-    def setExcludeSelf(self, value):
-        """
-        Sets the value of :py:attr:`excludeSelf`.
-        """
-        return self._set(excludeSelf=value)
-
-    def setSimilarityThreshold(self, value):
-        """
-        Sets the value of :py:attr:`similarityThreshold`.
-        """
-        return self._set(similarityThreshold=value)
-
-    def setOutputFormat(self, value):
-        """
-        Sets the value of :py:attr:`outputFormat`.
-        """
-        return self._set(outputFormat=value)
 
     def setM(self, value):
         """
@@ -647,25 +511,22 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
         """
         return self._set(initialModelPath=value)
 
+    # noinspection PyUnusedLocal
     @keyword_only
     def setParams(
         self,
         identifierCol="id",
-        queryIdentifierCol=None,
         queryPartitionsCol=None,
-        parallelism=None,
+        numThreads=None,
         featuresCol="features",
         predictionCol="prediction",
         m=16,
         ef=10,
         efConstruction=200,
-        numPartitions=1,
+        numPartitions=None,
         numReplicas=0,
         k=5,
         distanceFunction="cosine",
-        excludeSelf=False,
-        similarityThreshold=-1.0,
-        outputFormat="full",
         initialModelPath=None,
     ):
         kwargs = self._input_kwargs
@@ -676,18 +537,12 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
 
 
 # noinspection PyPep8Naming
-class HnswSimilarityModel(JavaModel, _HnswModelParams, JavaMLReadable, JavaMLWritable):
+class HnswSimilarityModel(KnnModel, _HnswModelParams, JavaMLReadable, JavaMLWritable):
     """
     Model fitted by Hnsw.
     """
 
     _classpath_model = "com.github.jelmerk.spark.knn.hnsw.HnswSimilarityModel"
-
-    def setQueryIdentifierCol(self, value):
-        """
-        Sets the value of :py:attr:`queryIdentifierCol`.
-        """
-        return self._set(queryIdentifierCol=value)
 
     def setQueryPartitionsCol(self, value):
         """
@@ -695,47 +550,11 @@ class HnswSimilarityModel(JavaModel, _HnswModelParams, JavaMLReadable, JavaMLWri
         """
         return self._set(queryPartitionsCol=value)
 
-    def setParallelism(self, value):
-        """
-        Sets the value of :py:attr:`parallelism`.
-        """
-        return self._set(parallelism=value)
-
     def setK(self, value):
         """
         Sets the value of :py:attr:`k`.
         """
         return self._set(k=value)
-
-    def setEf(self, value):
-        """
-        Sets the value of :py:attr:`ef`.
-        """
-        return self._set(ef=value)
-
-    def setExcludeSelf(self, value):
-        """
-        Sets the value of :py:attr:`excludeSelf`.
-        """
-        return self._set(excludeSelf=value)
-
-    def setSimilarityThreshold(self, value):
-        """
-        Sets the value of :py:attr:`similarityThreshold`.
-        """
-        return self._set(similarityThreshold=value)
-
-    def setOutputFormat(self, value):
-        """
-        Sets the value of :py:attr:`outputFormat`.
-        """
-        return self._set(outputFormat=value)
-
-    def setNumReplicas(self, value):
-        """
-        Sets the value of :py:attr:`numReplicas`.
-        """
-        return self._set(numReplicas=value)
 
     @classmethod
     def read(cls):

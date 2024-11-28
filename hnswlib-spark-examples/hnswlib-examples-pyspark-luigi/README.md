@@ -11,7 +11,7 @@ And activate the newly created virtual environment:
 
 Install dependencies:
 
-    pip install wheel luigi requests
+    pip install wheel luigi requests numpy
 
 To execute the task you created, run the following command:
 
