@@ -511,6 +511,7 @@ class HnswSimilarity(JavaEstimator, _HnswParams, JavaMLReadable, JavaMLWritable)
     def __init__(
         self,
         identifierCol="id",
+        partitionCol=None,
         queryIdentifierCol=None,
         queryPartitionsCol=None,
         parallelism=None,
