@@ -3,6 +3,7 @@ package com.github.jelmerk.spark.knn.hnsw
 import java.io.InputStream
 import java.net.InetSocketAddress
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -52,7 +53,8 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       numThreads: Int,
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
-      clientFactory: IndexClientFactory[TId, TVector, TDistance]
+      clientFactory: IndexClientFactory[TId, TVector, TDistance],
+      indexFuture: Future[Unit]
   ): HnswSimilarityModel =
     new HnswSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,
@@ -61,7 +63,8 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       numThreads,
       sparkContext,
       indices,
-      clientFactory
+      clientFactory,
+      indexFuture
     )
 }
 
@@ -147,7 +150,8 @@ private[knn] class HnswSimilarityModelImpl[
     val numThreads: Int,
     val sparkContext: SparkContext,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
-    val clientFactory: IndexClientFactory[TId, TVector, TDistance]
+    val clientFactory: IndexClientFactory[TId, TVector, TDistance],
+    val indexFuture: Future[Unit]
 )(implicit val idTypeTag: TypeTag[TId], val vectorTypeTag: TypeTag[TVector])
     extends HnswSimilarityModel
     with KnnModelOps[HnswSimilarityModel, TId, TVector, TItem, TDistance, HnswIndex[TId, TVector, TItem, TDistance]] {
@@ -160,7 +164,8 @@ private[knn] class HnswSimilarityModelImpl[
       numThreads,
       sparkContext,
       indexAddresses,
-      clientFactory
+      clientFactory,
+      indexFuture
     )
     copyValues(copied, extra).setParent(parent)
   }

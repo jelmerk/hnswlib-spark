@@ -10,7 +10,7 @@ from luigi.contrib.external_program import ExternalProgramTask
 # from luigi.contrib.hdfs import HdfsFlagTarget
 # from luigi.contrib.s3 import S3FlagTarget
 
-JAR='/Users/jelmerkuperus/dev/3rdparty/hnswlib-spark-old/hnswlib-spark/target/scala-2.12/hnswlib-spark-uberjar_3_4-assembly-1.1.2+6-793bae01+20250111-0846-SNAPSHOT.jar'
+PACKAGE='com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.1'
 
 multiprocessing.set_start_method("fork", force=True)
 num_cores=multiprocessing.cpu_count()
@@ -57,23 +57,15 @@ class Convert(SparkSubmitTask):
     Convert the input dataset to parquet.
     """
 
-    # master = 'yarn'
-    master = 'local[*]'
+    master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
-
-    driver_memory = '2g'
-
-    # executor_memory = '4g'
-
-    num_executors = IntParameter(default=1)
 
     name = 'Convert'
 
     app = 'convert.py'
 
-    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
-    jars = [JAR]
+    packages = [PACKAGE]
 
     def requires(self):
         return Unzip()
@@ -95,28 +87,15 @@ class HnswIndex(SparkSubmitTask):
     Construct the hnsw index and persists it to disk.
     """
 
-    # master = 'yarn'
-    master = 'local[*]'
+    master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
-
-    # driver_memory = '2g'
-    driver_memory = '24g'
-
-    # executor_memory = '12g'
-
-    num_executors = IntParameter(default=1)
-
-    executor_cores = IntParameter(default=num_cores)
 
     name = 'Hnsw index'
 
     app = 'hnsw_index.py'
 
-    capture_output = False
-
-    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
-    jars = [JAR]
+    packages = [PACKAGE]
 
     m = IntParameter(default=16)
 
@@ -151,24 +130,11 @@ class Query(SparkSubmitTask):
     Query the constructed knn index.
     """
 
-    # master = 'yarn'
-    master = 'local[*]'
+    master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
 
-    # driver_memory = '2g'
-    driver_memory = '24g'
-
-    # executor_memory = '10g'
-
-    capture_output = False
-
-    num_executors = IntParameter(default=1)
-
-    executor_cores = IntParameter(default=num_cores)
-
-    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
-    jars = [JAR]
+    packages = [PACKAGE]
 
     name = 'Query index'
 
@@ -204,28 +170,15 @@ class BruteForceIndex(SparkSubmitTask):
     Construct the brute force index and persists it to disk.
     """
 
-    # master = 'yarn'
-    master = 'local[*]'
+    master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
-
-    # driver_memory = '2g'
-    driver_memory = '24g'
-
-    # executor_memory = '12g'
-
-    num_executors = IntParameter(default=1)
-
-    executor_cores = IntParameter(default=num_cores)
 
     name = 'Brute force index'
 
     app = 'bruteforce_index.py'
 
-    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
-    jars = [JAR]
-
-    env = { "SPARK_TESTING": "1" } # needs to be set when using local spark
+    packages = [PACKAGE]
 
     @property
     def conf(self):
@@ -254,19 +207,9 @@ class Evaluate(SparkSubmitTask):
     Evaluate the accuracy of the approximate k-nearest neighbors model vs a bruteforce baseline.
     """
 
-    # master = 'yarn'
-    master = 'local[*]'
+    master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
-
-    # driver_memory = '2g'
-    driver_memory = '24g'
-
-    # executor_memory = '12g'
-
-    num_executors = IntParameter(default=1)
-
-    executor_cores = IntParameter(default=num_cores)
 
     k = IntParameter(default=10)
 
@@ -278,8 +221,7 @@ class Evaluate(SparkSubmitTask):
 
     app = 'evaluate_performance.py'
 
-    # packages = ['com.github.jelmerk:hnswlib-spark_2.4_2.11:1.1.0']
-    jars = [JAR]
+    packages = [PACKAGE]
 
     @property
     def conf(self):

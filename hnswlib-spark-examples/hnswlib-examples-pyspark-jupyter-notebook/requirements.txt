@@ -1,0 +1,4 @@
+requests==2.32.3
+pyspark[ml]==3.5.4
+hnswlib-spark==2.0.0a1
+ipykernel==6.29.5

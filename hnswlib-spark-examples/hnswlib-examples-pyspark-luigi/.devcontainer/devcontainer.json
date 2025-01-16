@@ -1,0 +1,29 @@
+{
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "vscode",
+  "workspaceFolder": "/Workspace",
+  "shutdownAction": "stopCompose",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.selectInterpreter": "${workspaceFolder}/.venv/bin/python",
+        "python.terminal.activateEnvInCurrentTerminal": true
+      }
+    }
+  },
+  "name": "Hnswlib Luigi Development Container",
+  "onCreateCommand": {
+    "venv": "python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
+  }
+}

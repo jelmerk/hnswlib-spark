@@ -1,19 +1,26 @@
 hnswlib-examples-pyspark-luigi
 ==============================
 
-Create a new virtual environment luigi-venv:
+## Description
 
-    python3 -m venv luigi-venv
 
-And activate the newly created virtual environment:
+## How to run
 
-    . luigi-venv/bin/activate
+Make sure you have the following software installed
 
-Install dependencies:
+- [docker](https://www.docker.com/products/docker-desktop/)
+- [vscode](https://code.visualstudio.com/) with the [devcontainer](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) plugin
 
-    pip install wheel luigi requests numpy
 
-To execute the task you created, run the following command:
+1. Create the spark environment with
+
+
+    docker-compose up
+
+2. Open this folder in vs code and choose reopen in container
+
+3. Open a new terminal inside vscode and execute the following command from the app folder
+
 
     python -m luigi --module flow Query --local-scheduler
 

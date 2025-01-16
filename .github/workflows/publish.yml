@@ -40,6 +40,12 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      - name: Publish artifacts
+      - name: Upload to Maven Central
         run: |
           sbt -java-home "$JAVA_HOME_8_X64" clean +publishSigned -DsparkVersion="$SPARK_VERSION" sonatypeBundleRelease
+      - name: Upload to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          sbt -java-home "$JAVA_HOME_8_X64" clean pyPublish

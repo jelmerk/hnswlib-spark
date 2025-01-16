@@ -3,10 +3,12 @@ package com.github.jelmerk.spark.knn
 import java.io.InputStream
 import java.net.{InetAddress, InetSocketAddress}
 
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.Duration
 import scala.language.{higherKinds, implicitConversions}
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 import com.github.jelmerk.knn.ObjectSerializer
 import com.github.jelmerk.knn.scalalike._
@@ -25,7 +27,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasFeaturesCol, HasPredictionCol}
 import org.apache.spark.ml.util.{MLReader, MLWriter}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.resource.{ResourceProfile, ResourceProfileBuilder, TaskResourceRequests}
+import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
@@ -59,6 +61,7 @@ private[knn] trait IndexType {
   /** Type of index. */
   protected type TIndex[TId, TVector, TItem <: Item[TId, TVector], TDistance] <: Index[TId, TVector, TItem, TDistance]
 
+  /** ClassTag of index type. */
   protected implicit def indexClassTag[TId: ClassTag, TVector: ClassTag, TItem <: Item[
     TId,
     TVector
@@ -157,6 +160,14 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
     *
     * @param uid
     *   identifier
+    * @param numPartitions
+    *   number of partitions
+    * @param numReplicas
+    *   number of replicas
+    * @param numThreads
+    *   number of threads
+    * @param sparkContext
+    *   the spark context
     * @param indices
     *   map of index servers
     * @tparam TId
@@ -182,7 +193,8 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
       numThreads: Int,
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
-      clientFactory: IndexClientFactory[TId, TVector, TDistance]
+      clientFactory: IndexClientFactory[TId, TVector, TDistance],
+      indexFuture: Future[Unit]
   ): TModel
 }
 
@@ -213,6 +225,17 @@ private[knn] trait KnnModelParams extends Params with HasFeaturesCol with HasPre
     featuresCol   -> "features"
   )
 
+  /** Validates the input schema and appends a prediction column to it.
+    *
+    * @param schema
+    *   The input schema of the dataset.
+    * @param identifierDataType
+    *   The type of the identifier column
+    * @return
+    *   The transformed schema with an added column for predictions.
+    * @throws IllegalArgumentException
+    *   If the output column (prediction column) already exists in the input schema.
+    */
   protected def validateAndTransformSchema(schema: StructType, identifierDataType: DataType): StructType = {
 
     val distanceType = schema(getFeaturesCol).dataType match {
@@ -234,8 +257,7 @@ private[knn] trait KnnModelParams extends Params with HasFeaturesCol with HasPre
   }
 }
 
-/** Params for knn algorithms.
-  */
+/** Params for knn algorithms. */
 private[knn] trait KnnAlgorithmParams extends KnnModelParams {
 
   /** Param for the column name for the row identifier. Default: "id"
@@ -459,7 +481,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       }
       .withResources(profile)
 
-    val servers = serve(metadata.uid, indexRdd, metadata.numReplicas)
+    val (servers, indexFuture) = serve(metadata.uid, indexRdd, metadata.numReplicas)
 
     val model = createModel(
       metadata.uid,
@@ -468,7 +490,8 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       metadata.numThreads,
       sc,
       servers,
-      clientFactory
+      clientFactory,
+      indexFuture
     )
 
     val params = metadata.paramMap
@@ -490,6 +513,9 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
 private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends Model[TModel] with KnnModelParams {
 
   private[knn] def sparkContext: SparkContext
+
+  private[knn] def indexFuture: Future[Unit]
+
   @volatile private[knn] var disposed: Boolean = false
 
   /** @group setParam */
@@ -509,6 +535,8 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends
   /** Disposes of the spark resources associated with this model. Afterwards it can no longer be used */
   def dispose(): Unit = {
     sparkContext.cancelJobGroup(uid)
+
+    Await.ready(indexFuture, Duration.Inf)
     disposed = true
   }
 
@@ -762,7 +790,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
 
     val modelUid = uid + "_" + System.currentTimeMillis().toString
 
-    val registrations = serve[TId, TVector, TItem, TDistance](modelUid, indexRdd, getNumReplicas)
+    val (registrations, indexFuture) = serve[TId, TVector, TItem, TDistance](modelUid, indexRdd, getNumReplicas)
 
     logInfo("All index replicas have successfully registered.")
 
@@ -779,7 +807,8 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       getNumThreads,
       sparkContext,
       registrations,
-      indexClientFactory
+      indexClientFactory,
+      indexFuture
     )
   }
 
@@ -835,22 +864,6 @@ private[knn] class PartitionReplicaIdPartitioner(partitions: Int, replicas: Int)
   }
 }
 
-private[knn] class IndexRunnable(uid: String, sparkContext: SparkContext, indexRdd: RDD[_]) extends Runnable {
-
-  override def run(): Unit = {
-    sparkContext.setJobGroup(uid, "job group that holds the indices")
-    try {
-      indexRdd.count()
-    } catch {
-      case NonFatal(_) =>
-        ()
-    } finally {
-      sparkContext.clearJobGroup()
-    }
-  }
-
-}
-
 private[knn] trait ModelLogging extends Logging {
   protected def logInfo(partition: Int, message: String): Unit = logInfo(f"partition $partition%04d: $message")
 
@@ -861,6 +874,31 @@ private[knn] trait ModelLogging extends Logging {
 
 private[knn] trait IndexServing extends ModelLogging with IndexType {
 
+  /** Replicates indices and serves them by starting index servers on each partition and registering them with a central
+    * registration server.
+    *
+    * @tparam TId
+    *   type of the index item identifier
+    * @tparam TVector
+    *   type of the index item vector
+    * @tparam TItem
+    *   type of the index item
+    * @tparam TDistance
+    *   type of distance between items
+    *
+    * @param uid
+    *   identifier
+    * @param indexRdd
+    *   The indices
+    * @param numReplicas
+    *   The number of replicas to create for each partition of the index.
+    * @param indexServerFactory
+    *   A factory for creating index servers, provided implicitly.
+    * @return
+    *   A tuple containing:
+    *   - A map of partition and replica identifiers to their corresponding server addresses.
+    *   - A `Future` that completes when the index servers terminate or an error occurs.
+    */
   protected def serve[
       TId: ClassTag,
       TVector: ClassTag,
@@ -872,7 +910,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
       numReplicas: Int
   )(implicit
       indexServerFactory: IndexServerFactory[TId, TVector, TItem, TDistance]
-  ): Map[PartitionAndReplica, InetSocketAddress] = {
+  ): (Map[PartitionAndReplica, InetSocketAddress], Future[Unit]) = {
 
     val numPartitions = indexRdd.partitions.length
 
@@ -891,15 +929,17 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     val server     = RegistrationServerFactory.create(driverHost, numPartitions, numReplicas)
     server.start()
     try {
-      val registrationAddress = server.address
+      val driverPort = server.address.getPort
 
-      logInfo(s"Started registration server on ${registrationAddress.getHostName}:${registrationAddress.getPort}")
+      logInfo(s"Started registration server on $driverHost:$driverPort")
 
       val serverRdd = replicaRdd
         .map { case ((partitionNum, replicaNum), index) =>
-          val executorHost = SparkEnv.get.blockManager.blockManagerId.host
-          val numThreads   = TaskContext.get().cpus()
-          val server       = indexServerFactory.create(executorHost, index, serializableConfiguration.value, numThreads)
+          // serializing an InetSocketAddress does not always seem to give the correct hostname in docker
+          val registrationAddress = new InetSocketAddress(driverHost, driverPort)
+          val executorHost        = SparkEnv.get.blockManager.blockManagerId.host
+          val numThreads          = TaskContext.get().cpus()
+          val server = indexServerFactory.create(executorHost, index, serializableConfiguration.value, numThreads)
 
           server.start()
 
@@ -938,12 +978,34 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
         }
         .withResources(indexRdd.getResourceProfile())
 
-      // the count will never complete because the tasks start the index server
-      val thread = new Thread(new IndexRunnable(uid, sparkContext, serverRdd), s"knn-index-thread-$uid")
-      thread.setDaemon(true)
-      thread.start()
+      implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
-      server.awaitRegistrations()
+      val indexFuture = Future {
+        sparkContext.setJobGroup(uid, "job group that holds the indices")
+        try {
+          serverRdd.count(): Unit
+        } finally {
+          sparkContext.clearJobGroup()
+        }
+      }
+
+      val registrationFuture = Future {
+        server.awaitRegistrations()
+      }
+
+      // await all indices registering themselves or an error.
+      Await.ready(Future.firstCompletedOf(Seq(indexFuture, registrationFuture)), Duration.Inf)
+
+      val maybeException = indexFuture.value.collect { case Failure(e) => e }
+
+      maybeException.foreach { throw _ }
+
+      registrationFuture.value
+        .collect { case Success(registrations) =>
+          registrations -> indexFuture
+        }
+        .getOrElse(throw new IllegalStateException("Should never happen"))
+
     } finally {
       server.shutdown()
     }

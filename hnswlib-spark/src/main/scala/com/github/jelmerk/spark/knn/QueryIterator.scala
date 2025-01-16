@@ -8,7 +8,7 @@ import com.github.jelmerk.registration.server.PartitionAndReplica
 import com.github.jelmerk.serving.client.IndexClientFactory
 import org.apache.spark.sql.Row
 
-class QueryIterator[TId, TVector, TDistance](
+private[knn] class QueryIterator[TId, TVector, TDistance](
     indices: Map[PartitionAndReplica, InetSocketAddress],
     indexClientFactory: IndexClientFactory[TId, TVector, TDistance],
     records: Iterator[Row],

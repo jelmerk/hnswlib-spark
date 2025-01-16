@@ -107,8 +107,7 @@ class IndexClient[TId, TVector, TDistance](
       }
     }
 
-    val responses = Await.result(Future.sequence(futures), Duration.Inf) // TODO not sure if inf is smart
-    responses.foreach(println) // TODO remove
+    Await.result(Future.sequence(futures), Duration.Inf) // TODO not sure if inf is smart
   }
 
   def shutdown(): Unit = {

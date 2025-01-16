@@ -53,6 +53,8 @@ lazy val pyTest           = taskKey[Unit]("Run the python tests")
 lazy val black            = taskKey[Unit]("Run the black code formatter")
 lazy val blackCheck       = taskKey[Unit]("Run the black code formatter in check mode")
 lazy val flake8           = taskKey[Unit]("Run the flake8 style enforcer")
+lazy val pyPackage        = taskKey[Unit]("Package python code")
+lazy val pyPublish        = taskKey[Unit]("Publish python code")
 
 lazy val root = (project in file("."))
   .aggregate(uberJar, cosmetic)
@@ -103,7 +105,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     createVirtualEnv := {
       val ret = (
         s"${pythonVersion.value} -m venv ${venvFolder.value}" #&&
-        s"${venvFolder.value}/bin/pip install wheel==0.42.0 pytest==7.4.3 pyspark[ml]==${sparkVersion.value} black==23.3.0 flake8==5.0.4"
+        s"${venvFolder.value}/bin/pip install wheel==0.42.0 pytest==7.4.3 pyspark[ml]==${sparkVersion.value} black==23.3.0 flake8==5.0.4 build==1.2.2.post1 twine==6.0.1"
       ).!
       require(ret == 0, "Creating venv failed")
     },
@@ -141,6 +143,21 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       require(ret == 0, "Flake8 failed")
     },
     flake8 := flake8.dependsOn(createVirtualEnv).value,
+    pyPackage := {
+      val venv = venvFolder.value
+      val ret = Process(
+        Seq(s"$venv/bin/python", "-m", "build"),
+        cwd = baseDirectory.value,
+        extraEnv = "VERSION" -> version.value
+      ).!
+      require(ret == 0, "Build failed")
+    },
+    pyPackage := pyPackage.dependsOn(createVirtualEnv).value,
+    pyPublish := {
+      val ret = Seq("python3", "-m", "twine", "upload", "dist/*").!
+      require(ret == 0, "Py publish failed")
+    },
+    pyPublish := pyPublish.dependsOn(pyPackage).value,
     libraryDependencies ++= Seq(
       "com.github.jelmerk"   %  "hnswlib-utils"        % hnswLibVersion,
       "com.github.jelmerk"   %  "hnswlib-core-jdk17"   % hnswLibVersion,

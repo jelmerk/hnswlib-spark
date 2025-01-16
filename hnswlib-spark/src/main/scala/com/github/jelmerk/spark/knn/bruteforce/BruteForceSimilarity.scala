@@ -3,6 +3,7 @@ package com.github.jelmerk.spark.knn.bruteforce
 import java.io.InputStream
 import java.net.InetSocketAddress
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -47,7 +48,8 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       numThreads: Int,
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
-      clientFactory: IndexClientFactory[TId, TVector, TDistance]
+      clientFactory: IndexClientFactory[TId, TVector, TDistance],
+      indexFuture: Future[Unit]
   ): BruteForceSimilarityModel =
     new BruteForceSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,
@@ -56,7 +58,8 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       numThreads,
       sparkContext,
       indices,
-      clientFactory
+      clientFactory,
+      indexFuture
     )
 }
 
@@ -89,7 +92,8 @@ private[knn] class BruteForceSimilarityModelImpl[
     val numThreads: Int,
     val sparkContext: SparkContext,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
-    val clientFactory: IndexClientFactory[TId, TVector, TDistance]
+    val clientFactory: IndexClientFactory[TId, TVector, TDistance],
+    val indexFuture: Future[Unit]
 )(implicit val idTypeTag: TypeTag[TId], val vectorTypeTag: TypeTag[TVector])
     extends BruteForceSimilarityModel
     with KnnModelOps[
@@ -111,7 +115,8 @@ private[knn] class BruteForceSimilarityModelImpl[
       numThreads,
       sparkContext,
       indexAddresses,
-      clientFactory
+      clientFactory,
+      indexFuture
     )
     copyValues(copied, extra).setParent(parent)
   }
