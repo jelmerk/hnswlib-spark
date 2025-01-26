@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-artifacts:
+  publish-maven-central-artifacts:
     runs-on: ubuntu-22.04
     strategy:
       max-parallel: 1
@@ -19,7 +19,6 @@ jobs:
         spark:
           - 3.4.1
           - 3.5.0
-
     env:
       ENV: 'ci'
       SPARK_VERSION: ${{ matrix.spark }}
@@ -43,6 +42,18 @@ jobs:
       - name: Upload to Maven Central
         run: |
           sbt -java-home "$JAVA_HOME_8_X64" clean +publishSigned -DsparkVersion="$SPARK_VERSION" sonatypeBundleRelease
+
+  publish-pypi-artifacts:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.9
       - name: Upload to PyPI
         env:
           TWINE_USERNAME: __token__

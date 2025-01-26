@@ -1012,3 +1012,26 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
 
   }
 }
+
+class IndexAdminClient[TId, TVector, TDistance](
+    jobGroup: String,
+    partitions: Map[PartitionAndReplica, InetSocketAddress],
+    indexFuture: Future[Unit],
+    sparkContext: SparkContext
+) {
+
+  def numPartitions: Int
+
+  def numReplicas: Int
+
+  def numThreads: Int
+
+  def save(path: String): Unit = {}
+
+  def dispose(): Unit = {
+    sparkContext.cancelJobGroup(jobGroup)
+
+    Await.ready(indexFuture, Duration.Inf)
+
+  }
+}

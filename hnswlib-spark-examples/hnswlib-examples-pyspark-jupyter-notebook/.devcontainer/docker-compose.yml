@@ -8,7 +8,9 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
     volumes:
-      - ~/data:/data
+      - type: volume
+        source: data
+        target: /data
     networks:
       - spark-network
 
@@ -23,7 +25,9 @@ services:
     depends_on:
       - spark-master
     volumes:
-      - ~/data:/data
+      - type: volume
+        source: data
+        target: /data
     networks:
       - spark-network
 
@@ -31,8 +35,12 @@ services:
     image: mcr.microsoft.com/devcontainers/python:1-3.10-bullseye
     command: sleep infinity
     volumes:
-      - ..:/Workspace
-      - ~/data:/data
+      - type: bind
+        source: ..
+        target: /Workspace
+      - type: volume
+        source: data
+        target: /data
     networks:
       - spark-network
 
@@ -51,3 +59,6 @@ services:
 networks:
   spark-network:
     driver: bridge
+
+volumes:
+  data:

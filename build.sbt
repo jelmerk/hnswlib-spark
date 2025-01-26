@@ -154,7 +154,8 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     },
     pyPackage := pyPackage.dependsOn(createVirtualEnv).value,
     pyPublish := {
-      val ret = Seq("python3", "-m", "twine", "upload", "dist/*").!
+      val venv = venvFolder.value
+      val ret = Seq(s"$venv/bin/python", "-m", "twine", "upload", "dist/*").!
       require(ret == 0, "Py publish failed")
     },
     pyPublish := pyPublish.dependsOn(pyPackage).value,

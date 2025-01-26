@@ -10,7 +10,7 @@ from luigi.contrib.external_program import ExternalProgramTask
 # from luigi.contrib.hdfs import HdfsFlagTarget
 # from luigi.contrib.s3 import S3FlagTarget
 
-PACKAGE='com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.1'
+PACKAGES='com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.2,io.delta:delta-spark_2.12:3.3.0'
 
 multiprocessing.set_start_method("fork", force=True)
 num_cores=multiprocessing.cpu_count()
@@ -67,6 +67,11 @@ class Convert(SparkSubmitTask):
 
     packages = [PACKAGE]
 
+    @property
+    def conf(self):
+        return {'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
+
     def requires(self):
         return Unzip()
 
@@ -104,7 +109,9 @@ class HnswIndex(SparkSubmitTask):
     @property
     def conf(self):
         return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
+                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return Convert()
@@ -145,7 +152,9 @@ class Query(SparkSubmitTask):
     @property
     def conf(self):
         return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
+                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return {'vectors': Convert(),
@@ -183,7 +192,9 @@ class BruteForceIndex(SparkSubmitTask):
     @property
     def conf(self):
         return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
+                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return Convert()
@@ -226,7 +237,9 @@ class Evaluate(SparkSubmitTask):
     @property
     def conf(self):
         return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator'}
+                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
+                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return {'vectors': Convert(),
