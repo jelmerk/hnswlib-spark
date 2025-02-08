@@ -14,16 +14,19 @@ def test_incremental_models(spark, tmp_path):
     hnsw1 = HnswSimilarity(numPartitions=2, numThreads=1)
 
     model1 = hnsw1.fit(df1)
-
-    model1.write().overwrite().save(tmp_path.as_posix())
+    try:
+        model1.write().overwrite().save(tmp_path.as_posix())
+    finally:
+        model1.dispose()
 
     df2 = spark.createDataFrame([
         [2, Vectors.dense([0.9, 0.1, 0.2])]
     ], ['id', 'features'])
 
     hnsw2 = HnswSimilarity(numPartitions=2, numThreads=1, initialModelPath=tmp_path.as_posix())
-
     model2 = hnsw2.fit(df2)
-
-    assert model2.transform(df1).select(F.explode("prediction")).count() == 2
+    try:
+        assert model2.transform(df1).select(F.explode("prediction")).count() == 2
+    finally:
+        model2.dispose()
 

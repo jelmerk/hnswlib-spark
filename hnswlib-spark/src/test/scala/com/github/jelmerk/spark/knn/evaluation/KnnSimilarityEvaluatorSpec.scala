@@ -1,42 +1,39 @@
 package com.github.jelmerk.spark.knn.evaluation
 
 import com.github.jelmerk.spark.SharedSparkContext
-import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers._
+import org.scalatest.wordspec.AnyWordSpec
 
 case class Neighbor[TId, TDistance](neighbor: TId, distance: TDistance)
 
-class KnnSimilarityEvaluatorSpec extends AnyFunSuite with SharedSparkContext {
+class KnnSimilarityEvaluatorSpec extends AnyWordSpec with SharedSparkContext {
 
-  test("evaluate performance") {
-    val sqlCtx = spark
-    import sqlCtx.implicits._
+  import spark.implicits._
 
-    val evaluator = new KnnSimilarityEvaluator()
-      .setApproximateNeighborsCol("approximate")
-      .setExactNeighborsCol("exact")
+  private val evaluator = new KnnSimilarityEvaluator()
+    .setApproximateNeighborsCol("approximate")
+    .setExactNeighborsCol("exact")
 
-    val df = Seq(
-      Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)) -> Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)),
-      Seq(Neighbor("3", 0.1f))                      -> Seq(Neighbor("3", 0.1f), Neighbor("4", 0.9f))
-    ).toDF("approximate", "exact")
+  "KnnSimilarityEvaluator" should {
 
-    evaluator.evaluate(df) should be(0.75)
-  }
+    "evaluate performance" in {
 
-  test("evaluate performance empty lists") {
-    val sqlCtx = spark
-    import sqlCtx.implicits._
+      val df = Seq(
+        Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)) -> Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)),
+        Seq(Neighbor("3", 0.1f))                      -> Seq(Neighbor("3", 0.1f), Neighbor("4", 0.9f))
+      ).toDF("approximate", "exact")
 
-    val evaluator = new KnnSimilarityEvaluator()
-      .setApproximateNeighborsCol("approximate")
-      .setExactNeighborsCol("exact")
+      evaluator.evaluate(df) should be(0.75)
+    }
 
-    val df = Seq(
-      Seq.empty[Neighbor[Int, Float]] -> Seq.empty[Neighbor[Int, Float]]
-    ).toDF("approximate", "exact")
+    "evaluate performance for no results as 1" in {
 
-    evaluator.evaluate(df) should be(1)
+      val df = Seq(
+        Seq.empty[Neighbor[Int, Float]] -> Seq.empty[Neighbor[Int, Float]]
+      ).toDF("approximate", "exact")
+
+      evaluator.evaluate(df) should be(1)
+    }
   }
 
 }

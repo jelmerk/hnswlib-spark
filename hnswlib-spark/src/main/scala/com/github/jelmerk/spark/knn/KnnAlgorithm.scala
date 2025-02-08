@@ -694,8 +694,6 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
   override def transformSchema(schema: StructType): StructType =
     validateAndTransformSchema(schema, schema(getIdentifierCol).dataType)
 
-  override def copy(extra: ParamMap): Estimator[TModel] = defaultCopy(extra)
-
   private def typedFit[
       TId: TypeTag: ClassTag,
       TVector: TypeTag: ClassTag,
@@ -788,7 +786,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       )
       .withResources(profile)
 
-    val modelUid = uid + "_" + System.currentTimeMillis().toString
+    val modelUid = uid + "_" + System.nanoTime().toString
 
     val (registrations, indexFuture) = serve[TId, TVector, TItem, TDistance](modelUid, indexRdd, getNumReplicas)
 
@@ -1009,29 +1007,6 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     } finally {
       server.shutdown()
     }
-
-  }
-}
-
-class IndexAdminClient[TId, TVector, TDistance](
-    jobGroup: String,
-    partitions: Map[PartitionAndReplica, InetSocketAddress],
-    indexFuture: Future[Unit],
-    sparkContext: SparkContext
-) {
-
-  def numPartitions: Int
-
-  def numReplicas: Int
-
-  def numThreads: Int
-
-  def save(path: String): Unit = {}
-
-  def dispose(): Unit = {
-    sparkContext.cancelJobGroup(jobGroup)
-
-    Await.ready(indexFuture, Duration.Inf)
 
   }
 }

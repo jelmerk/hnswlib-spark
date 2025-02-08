@@ -1,4 +1,4 @@
-package com.github.jelmerk.spark.knn.hnsw
+package com.github.jelmerk.spark.knn.bruteforce
 
 import java.io.File
 import java.nio.file.Files
@@ -12,7 +12,7 @@ import org.apache.spark.ml.param.ParamMap
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
 
-class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
+class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
   import spark.implicits._
 
@@ -22,7 +22,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
     .set("spark.speculation", "false")
     .set("spark.ui.enabled", "true")
 
-  private val hnsw = new HnswSimilarity()
+  private val bruteforce = new BruteForceSimilarity()
     .setIdentifierCol("id")
     .setFeaturesCol("vector")
     .setNumPartitions(2)
@@ -35,7 +35,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
     "query pre-partitioned data" in {
 
-      val similarity = hnsw
+      val similarity = bruteforce
         .copy(ParamMap.empty)
         .setPartitionCol("partition")
         .setQueryPartitionsCol("partitions")
@@ -67,7 +67,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         InputRow(3000000, Vectors.dense(0.4300, 0.9891))
       ).toDF()
 
-      withDisposableResource(hnsw.fit(items)) { model =>
+      withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
           .as[OutputRow[Int, DenseVector, Double]]
@@ -89,7 +89,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         InputRow(3000000, Vectors.sparse(2, Array(0, 1), Array(0.4300, 0.9891)))
       ).toDF()
 
-      withDisposableResource(hnsw.fit(items)) { model =>
+      withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
           .as[OutputRow[Int, SparseVector, Double]]
@@ -112,7 +112,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         InputRow(3000000, Array(0.4300f, 0.9891f))
       ).toDF()
 
-      withDisposableResource(hnsw.fit(items)) { model =>
+      withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
           .as[OutputRow[Int, Array[Float], Float]]
@@ -134,7 +134,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         InputRow(3000000, Array(0.4300, 0.9891))
       ).toDF()
 
-      withDisposableResource(hnsw.fit(items)) { model =>
+      withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
           .as[OutputRow[Int, Array[Double], Double]]
@@ -160,11 +160,11 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
         val path = new File(folder, "model").getCanonicalPath
 
-        withDisposableResource(hnsw.fit(items)) { model =>
+        withDisposableResource(bruteforce.fit(items)) { model =>
           model.write.overwrite.save(path)
         }
 
-        withDisposableResource(HnswSimilarityModel.load(path)) { model =>
+        withDisposableResource(BruteForceSimilarityModel.load(path)) { model =>
           val query = InputRow(1000000, Array(0.0110f, 0.2341f))
 
           val queryItems = Seq(query).toDF()
@@ -191,7 +191,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
       }
     }
 
-    def withDisposableResource[T](model: HnswSimilarityModel)(fn: HnswSimilarityModel => T): T = {
+    def withDisposableResource[T](model: BruteForceSimilarityModel)(fn: BruteForceSimilarityModel => T): T = {
       try {
         fn(model)
       } finally {

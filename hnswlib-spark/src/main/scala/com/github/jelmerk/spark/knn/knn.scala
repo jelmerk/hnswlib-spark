@@ -426,7 +426,7 @@ package object knn {
       extends IndexClientFactory[Int, Array[Double], Double](
         convertDoubleArray,
         extractIntId,
-        extractFloatDistance,
+        extractDoubleDistance,
         implicitly[Ordering[Double]]
       )
 
@@ -434,7 +434,7 @@ package object knn {
       extends IndexClientFactory[Long, Array[Double], Double](
         convertDoubleArray,
         extractLongId,
-        extractFloatDistance,
+        extractDoubleDistance,
         implicitly[Ordering[Double]]
       )
 
@@ -442,7 +442,7 @@ package object knn {
       extends IndexClientFactory[String, Array[Double], Double](
         convertDoubleArray,
         extractStringId,
-        extractFloatDistance,
+        extractDoubleDistance,
         implicitly[Ordering[Double]]
       )
 

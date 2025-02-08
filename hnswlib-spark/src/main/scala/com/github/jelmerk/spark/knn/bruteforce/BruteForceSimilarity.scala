@@ -162,4 +162,6 @@ class BruteForceSimilarity(override val uid: String)
   override protected def emptyIndex[TId, TVector, TItem <: Item[TId, TVector] with Product, TDistance]
       : BruteForceIndex[TId, TVector, TItem, TDistance] =
     BruteForceIndex.empty[TId, TVector, TItem, TDistance]
+
+  override def copy(extra: ParamMap): BruteForceSimilarity = defaultCopy(extra)
 }

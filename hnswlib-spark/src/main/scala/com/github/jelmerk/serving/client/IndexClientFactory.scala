@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
+import scala.collection.Seq
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -43,7 +44,7 @@ class IndexClient[TId, TVector, TDistance](
         acc.updated(partitionNum, old :+ client)
     }
 
-  private val allPartitions = indexAddresses.map(_._1.partitionNum).toSeq.distinct // TODO not very nice
+  private val allPartitions = indexAddresses.map(_._1.partitionNum).toSeq.distinct: Seq[Int] // TODO not very nice
 
   private val threadPool = Executors.newFixedThreadPool(1)
 

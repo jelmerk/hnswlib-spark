@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="true" type="ScalaTestRunConfiguration" factoryName="ScalaTest" show_console_on_std_err="false" show_console_on_std_out="false">
+        <option name="allowRunningInParallel" value="false" />
+        <option name="projectPathOnTarget" />
+        <option name="selectedOptions">
+            <list />
+        </option>
+        <option name="shortenClasspath" value="NONE" />
+        <option name="workingDirectory" value="$PROJECT_DIR$" />
+        <option name="envFilePaths">
+            <list />
+        </option>
+        <option name="envs">
+            <map>
+                <entry key="SPARK_TESTING" value="1" />
+            </map>
+        </option>
+        <option name="passParentEnvs" value="true" />
+        <method v="2">
+            <option name="Make" enabled="true" />
+        </method>
+    </configuration>
+</component>

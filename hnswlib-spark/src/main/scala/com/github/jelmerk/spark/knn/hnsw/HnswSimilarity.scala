@@ -226,4 +226,6 @@ class HnswSimilarity(override val uid: String)
   override protected def emptyIndex[TId, TVector, TItem <: Item[TId, TVector] with Product, TDistance]
       : HnswIndex[TId, TVector, TItem, TDistance] =
     HnswIndex.empty[TId, TVector, TItem, TDistance]
+
+  override def copy(extra: ParamMap): HnswSimilarity = defaultCopy(extra)
 }

@@ -17,6 +17,9 @@ def test_bruteforce(spark):
 
     model = bruteforce.fit(df)
 
-    result = model.transform(df)
+    try:
+        result = model.transform(df)
 
-    assert result.count() == 3
+        assert result.count() == 3
+    finally:
+        model.dispose()

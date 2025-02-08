@@ -1,16 +1,16 @@
 package com.github.jelmerk.spark
 
 import org.apache.spark.SparkConf
-import org.apache.spark.sql.{SparkSession, SQLContext}
+import org.apache.spark.sql.SparkSession
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 /** Shares a local `SparkContext` between all tests in a suite and closes it at the end */
 trait SharedSparkContext extends BeforeAndAfterAll {
   self: Suite =>
 
-  @transient private var sparkSession: SparkSession = _
+  @transient private var internalSparkSession: SparkSession = _
 
-  def appID: String = this.getClass.getName + math.floor(math.random * 10e4).toLong.toString
+  def appID: String = this.getClass.getName + math.floor(math.random() * 10e4).toLong.toString
 
   def conf: SparkConf = {
     new SparkConf()
@@ -19,22 +19,23 @@ trait SharedSparkContext extends BeforeAndAfterAll {
       .set("spark.ui.enabled", "false")
       .set("spark.app.id", appID)
       .set("spark.driver.host", "localhost")
+      .set("spark.cleaner.referenceTracking.cleanCheckpoints", "false")
   }
 
-  def spark: SQLContext = sparkSession.sqlContext
+  lazy val spark: SparkSession = internalSparkSession
 
   override def beforeAll(): Unit = {
-    sparkSession = SparkSession.builder().config(conf).getOrCreate()
     super.beforeAll()
+    internalSparkSession = SparkSession.builder().config(conf).getOrCreate()
   }
 
   override def afterAll(): Unit = {
     try {
-      Option(sparkSession).foreach { _.stop() }
+      Option(internalSparkSession).foreach { _.stop() }
       // To avoid Akka rebinding to the same port, since it doesn't
       // unbind immediately on shutdown.
       System.clearProperty("spark.driver.port")
-      sparkSession = null
+      internalSparkSession = null
     } finally {
       super.afterAll()
     }

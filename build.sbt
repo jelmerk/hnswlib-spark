@@ -3,9 +3,12 @@ import scalapb.compiler.Version.scalapbVersion
 import scalapb.compiler.Version.grpcJavaVersion
 
 ThisBuild / organization := "com.github.jelmerk"
-ThisBuild / scalaVersion := "2.12.18"
+//ThisBuild / scalaVersion := "2.12.18"
+ThisBuild / scalaVersion := "2.13.10"
 
 ThisBuild / fork := true
+
+ThisBuild / Test / parallelExecution := false
 
 ThisBuild / dynverSonatypeSnapshots := true
 
@@ -168,7 +171,6 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       "io.grpc"              %  "grpc-netty"           % grpcJavaVersion,
       "org.apache.spark"     %% "spark-hive"           % sparkVersion.value             % Provided,
       "org.apache.spark"     %% "spark-mllib"          % sparkVersion.value             % Provided,
-      "com.holdenkarau"      %% "spark-testing-base"   % s"${sparkVersion.value}_1.4.7" % Test,
       "org.scalatest"        %% "scalatest"            % "3.2.17"                       % Test
     )
   )

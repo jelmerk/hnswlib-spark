@@ -1,70 +1,68 @@
 package com.github.jelmerk.spark.conversion
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.DataFrame
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.prop.TableDrivenPropertyChecks._
+import com.github.jelmerk.spark.SharedSparkContext
+import org.apache.spark.ml.linalg._
+import org.apache.spark.sql.Encoder
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.scalatest.matchers.should.Matchers._
+import org.scalatest.wordspec.AnyWordSpec
 
-case class InputRow[TVector](vector: TVector)
+class VectorConverterSpec extends AnyWordSpec with SharedSparkContext {
 
-case class OutputRow[TVectorIn, TVectorOut](vector: TVectorIn, array: TVectorOut)
+  import spark.implicits._
 
-class VectorConverterSpec extends AnyFunSuite with DataFrameSuiteBase {
+  private implicit val denseVectorEncoder: Encoder[DenseVector] = ExpressionEncoder()
 
-  test("convert vectors") {
+  "VectorConverter" should {
 
-    val sqlCtx = sqlContext
-    import sqlCtx.implicits._
+    "convert dense vector to float array" in {
+      val input     = Seq(Tuple1(Vectors.dense(Array(1d, 2d, 3d)))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("array<float>")
+      val result    = converter.transform(input).select("out").as[Array[Float]].head()
 
-    val scenarios = Table[DataFrame, DataFrame, String](
-      ("input", "expectedOutput", "outputType"),
-      (
-        Seq(InputRow(Vectors.dense(Array(1d, 2d, 3d)))).toDF(),
-        Seq(OutputRow(Vectors.dense(Array(1d, 2d, 3d)), Array(1f, 2f, 3f))).toDF(),
-        "array<float>"
-      ),
-      (
-        Seq(InputRow(Array(1d, 2d, 3d))).toDF(),
-        Seq(OutputRow(Array(1d, 2d, 3d), Array(1f, 2f, 3f))).toDF(),
-        "array<float>"
-      ),
-      (
-        Seq(InputRow(Vectors.dense(Array(1d, 2d, 3d)))).toDF(),
-        Seq(OutputRow(Vectors.dense(Array(1d, 2d, 3d)), Array(1d, 2d, 3d))).toDF(),
-        "array<double>"
-      ),
-      (
-        Seq(InputRow(Array(1f, 2f, 3f))).toDF(),
-        Seq(OutputRow(Array(1f, 2f, 3f), Array(1d, 2d, 3d))).toDF(),
-        "array<double>"
-      ),
-      (
-        Seq(InputRow(Array(1f, 2f, 3f))).toDF(),
-        Seq(OutputRow(Array(1f, 2f, 3f), Vectors.dense(Array(1d, 2d, 3d)))).toDF(),
-        "vector"
-      ),
-      (
-        Seq(InputRow(Array(1d, 2d, 3d))).toDF(),
-        Seq(OutputRow(Array(1d, 2d, 3d), Vectors.dense(Array(1d, 2d, 3d)))).toDF(),
-        "vector"
-      )
-    )
+      result should be(Array(1f, 2f, 3f))
+    }
 
-    val input          = Seq(InputRow(Array(1d, 2d, 3d))).toDF()
-    val expectedOutput = Seq(OutputRow(Array(1d, 2d, 3d), Vectors.dense(Array(1d, 2d, 3d)))).toDF()
-    val outputType     = "vector"
+    "convert double array to float array" in {
+      val input     = Seq(Tuple1(Array(1d, 2d, 3d))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("array<float>")
+      val result    = converter.transform(input).select("out").as[Array[Float]].head()
 
-//    forAll (scenarios) { case (input, expectedOutput, outputType) =>
+      result should be(Array(1f, 2f, 3f))
+    }
 
-    val converter = new VectorConverter()
-      .setInputCol("vector")
-      .setOutputCol("array")
-      .setOutputType(outputType)
+    "convert dense vector to double array" in {
+      val input     = Seq(Tuple1(Vectors.dense(Array(1d, 2d, 3d)))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("array<double>")
+      val result    = converter.transform(input).select("out").as[Array[Double]].head()
 
-//      converter.transform(input).show()
-    assertDataFrameEquals(converter.transform(input), expectedOutput)
-//    }
+      result should be(Array(1d, 2d, 3d))
+    }
+
+    "convert float array to double array" in {
+      val input     = Seq(Tuple1(Array(1f, 2f, 3f))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("array<double>")
+      val result    = converter.transform(input).select("out").as[Array[Double]].head()
+
+      result should be(Array(1d, 2d, 3d))
+    }
+
+    "convert float array to dense vector" in {
+      val input     = Seq(Tuple1(Array(1f, 2f, 3f))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("vector")
+      val result    = converter.transform(input).select("out").as[DenseVector].head()
+
+      result should be(Vectors.dense(Array(1d, 2d, 3d)))
+    }
+
+    "convert double array to dense vector" in {
+      val input     = Seq(Tuple1(Array(1d, 2d, 3d))).toDF("in")
+      val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("vector")
+      val result    = converter.transform(input).select("out").as[DenseVector].head()
+
+      result should be(Vectors.dense(Array(1d, 2d, 3d)))
+    }
 
   }
+
 }

@@ -1,5 +1,6 @@
 from pkg_resources import get_distribution
 
+
 def version():
     """Returns the current Hnswlib version.
 
