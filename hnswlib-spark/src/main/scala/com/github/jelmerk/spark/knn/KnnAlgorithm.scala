@@ -3,6 +3,7 @@ package com.github.jelmerk.spark.knn
 import java.io.InputStream
 import java.net.{InetAddress, InetSocketAddress}
 
+import scala.collection.immutable
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 import scala.language.{higherKinds, implicitConversions}
@@ -170,6 +171,10 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
     *   the spark context
     * @param indices
     *   map of index servers
+    * @param clientFactory
+    *   builds index clients
+    * @param taskGroup
+    *   taskgroup that holds the indices
     * @tparam TId
     *   type of the index item identifier
     * @tparam TVector
@@ -194,7 +199,7 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
-      indexFuture: Future[Unit]
+      taskGroup: String
   ): TModel
 }
 
@@ -378,7 +383,7 @@ private[knn] class KnnModelWriter[
     )
 
     val metadataPath = new Path(path, "metadata").toString
-    sc.parallelize(Seq(write(metadata)), numSlices = 1).saveAsTextFile(metadataPath)
+    sc.parallelize(immutable.Seq(write(metadata)), numSlices = 1).saveAsTextFile(metadataPath)
 
     val indicesPath = new Path(path, "indices").toString
 
@@ -481,7 +486,8 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       }
       .withResources(profile)
 
-    val (servers, indexFuture) = serve(metadata.uid, indexRdd, metadata.numReplicas)
+    val jobGroup = metadata.uid + "_" + System.currentTimeMillis()
+    val servers  = serve(metadata.uid, jobGroup, indexRdd, metadata.numReplicas)
 
     val model = createModel(
       metadata.uid,
@@ -491,7 +497,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       sc,
       servers,
       clientFactory,
-      indexFuture
+      metadata.uid
     )
 
     val params = metadata.paramMap
@@ -514,8 +520,6 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends
 
   private[knn] def sparkContext: SparkContext
 
-  private[knn] def indexFuture: Future[Unit]
-
   @volatile private[knn] var disposed: Boolean = false
 
   /** @group setParam */
@@ -536,7 +540,6 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends
   def dispose(): Unit = {
     sparkContext.cancelJobGroup(uid)
 
-    Await.ready(indexFuture, Duration.Inf)
     disposed = true
   }
 
@@ -786,9 +789,9 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       )
       .withResources(profile)
 
-    val modelUid = uid + "_" + System.nanoTime().toString
+    val jobGroup = uid + "_" + System.nanoTime()
 
-    val (registrations, indexFuture) = serve[TId, TVector, TItem, TDistance](modelUid, indexRdd, getNumReplicas)
+    val registrations = serve[TId, TVector, TItem, TDistance](uid, jobGroup, indexRdd, getNumReplicas)
 
     logInfo("All index replicas have successfully registered.")
 
@@ -799,14 +802,14 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       }
 
     createModel[TId, TVector, TItem, TDistance](
-      modelUid,
+      jobGroup,
       getNumPartitions,
       getNumReplicas,
       getNumThreads,
       sparkContext,
       registrations,
       indexClientFactory,
-      indexFuture
+      jobGroup
     )
   }
 
@@ -893,9 +896,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     * @param indexServerFactory
     *   A factory for creating index servers, provided implicitly.
     * @return
-    *   A tuple containing:
-    *   - A map of partition and replica identifiers to their corresponding server addresses.
-    *   - A `Future` that completes when the index servers terminate or an error occurs.
+    *   A map of partition and replica identifiers to their corresponding server addresses.
     */
   protected def serve[
       TId: ClassTag,
@@ -904,11 +905,12 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
       TDistance: ClassTag
   ](
       uid: String,
+      jobGroup: String,
       indexRdd: RDD[TIndex[TId, TVector, TItem, TDistance]],
       numReplicas: Int
   )(implicit
       indexServerFactory: IndexServerFactory[TId, TVector, TItem, TDistance]
-  ): (Map[PartitionAndReplica, InetSocketAddress], Future[Unit]) = {
+  ): Map[PartitionAndReplica, InetSocketAddress] = {
 
     val numPartitions = indexRdd.partitions.length
 
@@ -979,7 +981,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
       implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
       val indexFuture = Future {
-        sparkContext.setJobGroup(uid, "job group that holds the indices")
+        sparkContext.setJobGroup(jobGroup, "job group that holds the indices")
         try {
           serverRdd.count(): Unit
         } finally {
@@ -1000,7 +1002,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
 
       registrationFuture.value
         .collect { case Success(registrations) =>
-          registrations -> indexFuture
+          registrations
         }
         .getOrElse(throw new IllegalStateException("Should never happen"))
 

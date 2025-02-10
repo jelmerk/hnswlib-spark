@@ -62,44 +62,44 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
     "index and query dense vectors" in {
 
       val items = Seq(
-        InputRow(1000000, Vectors.dense(0.0110, 0.2341)),
-        InputRow(2000000, Vectors.dense(0.2300, 0.3891)),
-        InputRow(3000000, Vectors.dense(0.4300, 0.9891))
+        InputRow(1000000L, Vectors.dense(0.0110, 0.2341)),
+        InputRow(2000000L, Vectors.dense(0.2300, 0.3891)),
+        InputRow(3000000L, Vectors.dense(0.4300, 0.9891))
       ).toDF()
 
       withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
-          .as[OutputRow[Int, DenseVector, Double]]
+          .as[OutputRow[Long, DenseVector, Double]]
           .collect()
           .groupBy(_.id)
           .mapValues(_.head)
 
-        results(1000000).neighbors.map(_.neighbor) should be(Seq(1000000, 3000000, 2000000))
-        results(2000000).neighbors.map(_.neighbor) should be(Seq(2000000, 3000000, 1000000))
-        results(3000000).neighbors.map(_.neighbor) should be(Seq(3000000, 2000000, 1000000))
+        results(1000000L).neighbors.map(_.neighbor) should be(Seq(1000000L, 3000000L, 2000000L))
+        results(2000000L).neighbors.map(_.neighbor) should be(Seq(2000000L, 3000000L, 1000000L))
+        results(3000000L).neighbors.map(_.neighbor) should be(Seq(3000000L, 2000000L, 1000000L))
 
       }
     }
 
     "index and query sparse vectors" in {
       val items = Seq(
-        InputRow(1000000, Vectors.sparse(2, Array(0, 1), Array(0.0110, 0.2341))),
-        InputRow(2000000, Vectors.sparse(2, Array(0, 1), Array(0.2300, 0.3891))),
-        InputRow(3000000, Vectors.sparse(2, Array(0, 1), Array(0.4300, 0.9891)))
+        InputRow("1000000", Vectors.sparse(2, Array(0, 1), Array(0.0110, 0.2341))),
+        InputRow("2000000", Vectors.sparse(2, Array(0, 1), Array(0.2300, 0.3891))),
+        InputRow("3000000", Vectors.sparse(2, Array(0, 1), Array(0.4300, 0.9891)))
       ).toDF()
 
       withDisposableResource(bruteforce.fit(items)) { model =>
         val results = model
           .transform(items)
-          .as[OutputRow[Int, SparseVector, Double]]
+          .as[OutputRow[String, SparseVector, Double]]
           .collect()
           .groupBy(_.id)
           .mapValues(_.head)
 
-        results(1000000).neighbors.map(_.neighbor) should be(Seq(1000000, 3000000, 2000000))
-        results(2000000).neighbors.map(_.neighbor) should be(Seq(2000000, 3000000, 1000000))
-        results(3000000).neighbors.map(_.neighbor) should be(Seq(3000000, 2000000, 1000000))
+        results("1000000").neighbors.map(_.neighbor) should be(Seq("1000000", "3000000", "2000000"))
+        results("2000000").neighbors.map(_.neighbor) should be(Seq("2000000", "3000000", "1000000"))
+        results("3000000").neighbors.map(_.neighbor) should be(Seq("3000000", "2000000", "1000000"))
 
       }
     }

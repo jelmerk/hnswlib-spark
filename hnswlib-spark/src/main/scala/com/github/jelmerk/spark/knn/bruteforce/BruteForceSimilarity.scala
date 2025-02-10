@@ -3,7 +3,6 @@ package com.github.jelmerk.spark.knn.bruteforce
 import java.io.InputStream
 import java.net.InetSocketAddress
 
-import scala.concurrent.Future
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -49,7 +48,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
-      indexFuture: Future[Unit]
+      taskGroup: String
   ): BruteForceSimilarityModel =
     new BruteForceSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,
@@ -59,7 +58,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       sparkContext,
       indices,
       clientFactory,
-      indexFuture
+      taskGroup
     )
 }
 
@@ -93,7 +92,7 @@ private[knn] class BruteForceSimilarityModelImpl[
     val sparkContext: SparkContext,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     val clientFactory: IndexClientFactory[TId, TVector, TDistance],
-    val indexFuture: Future[Unit]
+    val taskGroup: String
 )(implicit val idTypeTag: TypeTag[TId], val vectorTypeTag: TypeTag[TVector])
     extends BruteForceSimilarityModel
     with KnnModelOps[
@@ -116,7 +115,7 @@ private[knn] class BruteForceSimilarityModelImpl[
       sparkContext,
       indexAddresses,
       clientFactory,
-      indexFuture
+      taskGroup
     )
     copyValues(copied, extra).setParent(parent)
   }
