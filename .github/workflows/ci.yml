@@ -38,9 +38,3 @@ jobs:
       - name: Build and test
         run: |
           sbt -java-home "$JAVA_HOME_8_X64" clean scalafmtCheckAll blackCheck flake8 +test pyTest -DsparkVersion="$SPARK_VERSION"
-      - name: Publish Unit test results
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: '**/target/test-reports/TEST-*.xml'
-          check_name: Unit test results
-        if: always()

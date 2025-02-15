@@ -9,7 +9,7 @@ import scala.concurrent.duration.Duration
 import scala.language.{higherKinds, implicitConversions}
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 import com.github.jelmerk.knn.ObjectSerializer
 import com.github.jelmerk.knn.scalalike._
@@ -275,6 +275,8 @@ private[knn] trait KnnAlgorithmParams extends KnnModelParams {
   final def getIdentifierCol: String = $(identifierCol)
 
   /** Number of partitions
+    *
+    * @group param
     */
   final val numPartitions = new IntParam(this, "numPartitions", "number of partitions", ParamValidators.gt(0))
 
@@ -312,6 +314,8 @@ private[knn] trait KnnAlgorithmParams extends KnnModelParams {
   final def getDistanceFunction: String = $(distanceFunction)
 
   /** Param for the partition identifier
+    *
+    * @group param
     */
   final val partitionCol = new Param[String](this, "partitionCol", "column name for the partition identifier")
 
@@ -319,6 +323,8 @@ private[knn] trait KnnAlgorithmParams extends KnnModelParams {
   final def getPartitionCol: String = $(partitionCol)
 
   /** Param to the initial model. All the vectors from the initial model will be included in the final output model.
+    *
+    * @group param
     */
   final val initialModelPath = new Param[String](this, "initialModelPath", "path to the initial model")
 
@@ -662,6 +668,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
   /** @group setParam */
   def setNumThreads(value: Int): this.type = set(numThreads, value)
 
+  /** @group setParam */
   def setInitialModelPath(value: String): this.type = set(initialModelPath, value)
 
   override def fit(dataset: Dataset[_]): TModel = {
@@ -889,6 +896,8 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     *
     * @param uid
     *   identifier
+    * @param jobGroup
+    *   Job group of the job that holds on the the indices being served
     * @param indexRdd
     *   The indices
     * @param numReplicas
@@ -1000,11 +1009,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
 
       maybeException.foreach { throw _ }
 
-      registrationFuture.value
-        .collect { case Success(registrations) =>
-          registrations
-        }
-        .getOrElse(throw new IllegalStateException("Should never happen"))
+      Await.result(registrationFuture, Duration.Inf)
 
     } finally {
       server.shutdown()
