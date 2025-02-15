@@ -80,13 +80,12 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "python",
     Test / envVars += "SPARK_TESTING" -> "1",
-    Compile / doc / javacOptions ++= {
-      Seq("-Xdoclint:none")
-    },
+    Compile / doc / javacOptions ++= Seq("-Xdoclint:none"),
     assembly / mainClass := None,
     assembly / assemblyOption ~= {
       _.withIncludeScala(false)
     },
+    cleanFiles += baseDirectory.value / "dist",
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
       case x =>
@@ -150,16 +149,18 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val venv = venvFolder.value
       val ret = Process(
         Seq(s"$venv/bin/python", "-m", "build"),
-        cwd = baseDirectory.value,
-        extraEnv = "VERSION" -> version.value
+        cwd = baseDirectory.value
       ).!
       require(ret == 0, "Build failed")
     },
     pyPackage := pyPackage.dependsOn(createVirtualEnv).value,
     pyPublish := {
       val venv = venvFolder.value
-      val ret = Seq(s"$venv/bin/python", "-m", "twine", "upload", "dist/*").!
-      require(ret == 0, "Py publish failed")
+      val ret = Process(
+        Seq(s"$venv/bin/python", "-m", "twine", "upload", "dist/*"),
+        cwd = baseDirectory.value
+      ).!
+      require(ret == 0, "PyPublish failed")
     },
     pyPublish := pyPublish.dependsOn(pyPackage).value,
     libraryDependencies ++= Seq(
