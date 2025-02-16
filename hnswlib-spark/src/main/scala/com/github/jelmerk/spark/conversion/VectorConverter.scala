@@ -1,22 +1,22 @@
 package com.github.jelmerk.spark.conversion
 
 import com.github.jelmerk.spark.linalg.Normalizer
+import com.github.jelmerk.spark.util.DefaultParamsWritable
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.param.{Param, ParamMap}
 import org.apache.spark.ml.param.shared.{HasInputCol, HasOutputCol}
-import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
+import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable}
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{ArrayType, DataType, DoubleType, FloatType, StructType}
 
-/** Companion class for VectorConverter.
-  */
-object VectorConverter extends DefaultParamsReadable[Normalizer] {
-  override def load(path: String): Normalizer = super.load(path)
+/** Companion class for VectorConverter. */
+object VectorConverter extends DefaultParamsReadable[VectorConverter] {
+  override def load(path: String): VectorConverter = super.load(path)
 }
 
 private[conversion] trait VectorConverterParams extends HasInputCol with HasOutputCol {

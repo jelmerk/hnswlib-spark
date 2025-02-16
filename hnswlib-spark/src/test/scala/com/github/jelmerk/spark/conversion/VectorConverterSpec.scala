@@ -1,5 +1,8 @@
 package com.github.jelmerk.spark.conversion
 
+import java.io.File
+
+import com.github.jelmerk.TestHelpers._
 import com.github.jelmerk.spark.SharedSparkContext
 import org.apache.spark.ml.linalg._
 import org.apache.spark.sql.Encoder
@@ -63,6 +66,20 @@ class VectorConverterSpec extends AnyWordSpec with SharedSparkContext {
       result should be(Vectors.dense(Array(1d, 2d, 3d)))
     }
 
+    "save and load converter" in {
+      withTempFolder { dir =>
+        val converter = new VectorConverter().setInputCol("in").setOutputCol("out").setOutputType("array<float>")
+
+        val path = new File(dir, "converted").toString
+        converter.write.overwrite().save(path)
+
+        val loadedConverter = VectorConverter.read.load(path)
+
+        loadedConverter.getInputCol should be(converter.getInputCol)
+        loadedConverter.getOutputCol should be(converter.getOutputCol)
+        loadedConverter.getOutputType should be(converter.getOutputType)
+      }
+    }
   }
 
 }

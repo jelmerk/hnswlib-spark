@@ -12,6 +12,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Failure
 
+import com.github.jelmerk.Disposable
 import com.github.jelmerk.knn.ObjectSerializer
 import com.github.jelmerk.knn.scalalike._
 import com.github.jelmerk.registration.client.RegistrationClient
@@ -536,7 +537,10 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
   * @tparam TModel
   *   type of the model
   */
-private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends Model[TModel] with KnnModelParams {
+private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
+    extends Model[TModel]
+    with KnnModelParams
+    with Disposable {
 
   private[knn] def sparkContext: SparkContext
 
@@ -557,7 +561,7 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]] extends
   def isDisposed: Boolean = disposed
 
   /** Disposes of the spark resources associated with this model. Afterwards it can no longer be used */
-  def dispose(): Unit = {
+  override def dispose(): Unit = {
     sparkContext.cancelJobGroup(uid)
 
     disposed = true

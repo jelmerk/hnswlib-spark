@@ -1,11 +1,9 @@
 package com.github.jelmerk.spark.knn.bruteforce
 
 import java.io.File
-import java.nio.file.Files
-import java.util.UUID
 
+import com.github.jelmerk.TestHelpers._
 import com.github.jelmerk.spark.SharedSparkContext
-import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vectors}
 import org.apache.spark.ml.param.ParamMap
@@ -180,23 +178,6 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         }
       }
 
-    }
-
-    def withTempFolder[T](fn: File => T): T = {
-      val tempDir = Files.createTempDirectory(UUID.randomUUID().toString).toFile
-      try {
-        fn(tempDir)
-      } finally {
-        FileUtils.deleteDirectory(tempDir)
-      }
-    }
-
-    def withDisposableResource[T](model: BruteForceSimilarityModel)(fn: BruteForceSimilarityModel => T): T = {
-      try {
-        fn(model)
-      } finally {
-        model.dispose()
-      }
     }
   }
 

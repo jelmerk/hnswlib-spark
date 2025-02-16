@@ -1,13 +1,14 @@
 package com.github.jelmerk.spark.linalg
 
 import com.github.jelmerk.knn.util.VectorUtils
+import com.github.jelmerk.spark.util.DefaultParamsWritable
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
 import org.apache.spark.ml.linalg.SQLDataTypes._
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.param.shared.{HasInputCol, HasOutputCol}
-import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
+import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable}
 import org.apache.spark.sql.{DataFrame, Dataset}
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._

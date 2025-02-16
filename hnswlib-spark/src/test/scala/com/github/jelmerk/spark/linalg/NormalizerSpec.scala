@@ -1,5 +1,8 @@
 package com.github.jelmerk.spark.linalg
 
+import java.io.File
+
+import com.github.jelmerk.TestHelpers._
 import com.github.jelmerk.spark.SharedSparkContext
 import org.apache.spark.ml.linalg._
 import org.apache.spark.sql.Encoder
@@ -44,6 +47,18 @@ class NormalizerSpec extends AnyWordSpec with SharedSparkContext {
       val input  = Seq(Tuple1(Array(0.01f, 0.02f, 0.03f))).toDF("vector")
       val result = normalizer.transform(input).select("normalized").as[Array[Float]].head()
       result should be(Array(0.26726124f, 0.5345225f, 0.8017837f))
+    }
+
+    "save and load normalizer" in {
+      withTempFolder { dir =>
+        val path = new File(dir, "normalizer").toString
+        normalizer.write.overwrite().save(path)
+
+        val loadedNormalizer = Normalizer.read.load(path)
+
+        loadedNormalizer.getInputCol should be(normalizer.getInputCol)
+        loadedNormalizer.getOutputCol should be(normalizer.getOutputCol)
+      }
     }
   }
 
