@@ -2,6 +2,7 @@ package com.github.jelmerk.spark.knn
 
 import java.io.InputStream
 import java.net.{InetAddress, InetSocketAddress}
+import java.nio.charset.StandardCharsets
 
 import scala.collection.immutable
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -397,8 +398,20 @@ private[knn] class KnnModelWriter[
       )
     )
 
-    val metadataPath = new Path(path, "metadata").toString
-    sc.parallelize(immutable.Seq(write(metadata)), numSlices = 1).saveAsTextFile(metadataPath)
+    // Avoid saveAsTextFile since it runs on an executor, and we don’t want to allocate one core just for saving the model.
+    val metadataPath = new Path(path, "metadata")
+
+    val fs = metadataPath.getFileSystem(sc.hadoopConfiguration)
+
+    val jsonPath = new Path(metadataPath, "part-00000")
+    val out      = fs.create(jsonPath)
+    try {
+      out.write(write(metadata).getBytes(StandardCharsets.UTF_8))
+    } finally {
+      out.close()
+    }
+
+    fs.create(new Path(metadataPath, "_SUCCESS")).close()
 
   }
 }
