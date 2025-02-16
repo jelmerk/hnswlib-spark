@@ -149,7 +149,8 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val venv = venvFolder.value
       val ret = Process(
         Seq(s"$venv/bin/python", "-m", "build"),
-        cwd = baseDirectory.value
+        cwd = baseDirectory.value,
+        extraEnv = "VERSION" -> version.value
       ).!
       require(ret == 0, "Build failed")
     },
@@ -172,7 +173,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       "io.grpc"              %  "grpc-netty"           % grpcJavaVersion,
       "org.apache.spark"     %% "spark-hive"           % sparkVersion.value             % Provided,
       "org.apache.spark"     %% "spark-mllib"          % sparkVersion.value             % Provided,
-      "org.scalatest"        %% "scalatest"            % "3.2.17"                       % Test
+      "org.scalatest"        %% "scalatest"            % "3.2.19"                       % Test
     )
   )
 

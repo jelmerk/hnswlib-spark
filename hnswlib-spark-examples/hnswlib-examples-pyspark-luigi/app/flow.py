@@ -1,79 +1,74 @@
-import urllib.request
-import shutil
+import zipfile
+import boto3
+import requests
+import io
 
 import luigi
-import multiprocessing
-from luigi import FloatParameter, IntParameter, LocalTarget, Parameter
+from luigi import FloatParameter, IntParameter, Parameter
 from luigi.contrib.spark import SparkSubmitTask
-from luigi.format import Nop
-from luigi.contrib.external_program import ExternalProgramTask
-# from luigi.contrib.hdfs import HdfsFlagTarget
-# from luigi.contrib.s3 import S3FlagTarget
+from luigi.contrib.s3 import S3FlagTarget, S3Target
 
-PACKAGES='com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.2,io.delta:delta-spark_2.12:3.3.0'
-
-multiprocessing.set_start_method("fork", force=True)
-num_cores=multiprocessing.cpu_count()
 
 class Download(luigi.Task):
     """
     Download the input dataset.
     """
 
-    url = Parameter(default='https://nlp.stanford.edu/data/glove.42B.300d.zip')
+    url = Parameter(default='https://huggingface.co/stanfordnlp/glove/resolve/main/glove.42B.300d.zip')
 
     def output(self):
-        return LocalTarget('/tmp/dataset.zip', format=Nop)
+        return S3Target('s3a://spark/input/glove.42B.300d.txt')
 
     def run(self):
-        # noinspection PyTypeChecker
-        with urllib.request.urlopen(self.url) as response:
-            with self.output().open('wb') as f:
-                shutil.copyfileobj(response, f)
+        s3 = boto3.client("s3")
+        bucket_name = "spark"
+
+        with requests.get(self.url, stream=True) as response:
+            response.raise_for_status()
+
+            with zipfile.ZipFile(io.BytesIO(response.raw.read()), "r") as zip_ref:
+                for file_name in zip_ref.namelist():
+                    with zip_ref.open(file_name) as file:
+                        s3.upload_fileobj(file, bucket_name, f"input/{file_name}")
 
 
-class Unzip(ExternalProgramTask):
-    """
-    Unzip the input dataset.
-    """
-
-    def requires(self):
-        return Download()
-
-    def output(self):
-        return LocalTarget('/tmp/dataset', format=Nop)
-
-    def program_args(self):
-        self.output().makedirs()
-        return ['unzip',
-                '-u',
-                '-q',
-                '-d', self.output().path,
-                self.input().path]
-
-
-class Convert(SparkSubmitTask):
-    """
-    Convert the input dataset to parquet.
-    """
+class BaseSparkSubmitTask(SparkSubmitTask):
 
     master = 'spark://spark-master:7077'
 
     deploy_mode = 'client'
 
+    packages = [
+        'org.apache.hadoop:hadoop-aws:3.3.4',
+        'com.amazonaws:aws-java-sdk-bundle:1.12.262',
+        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.4',
+        'io.delta:delta-spark_2.12:3.3.0'
+    ]
+
+    executor_memory = "12G"
+
+    @property
+    def conf(self):
+        return {
+            'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
+            'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog',
+            'spark.hadoop.fs.s3a.endpoint': 'http://minio:9000',
+            'spark.hadoop.fs.s3a.path.style.access': 'true',
+            'spark.hadoop.fs.s3a.impl': 'org.apache.hadoop.fs.s3a.S3AFileSystem'
+        }
+
+
+class Convert(BaseSparkSubmitTask):
+    """
+    Convert the input dataset to parquet.
+    """
+
     name = 'Convert'
 
     app = 'convert.py'
 
-    packages = [PACKAGE]
-
-    @property
-    def conf(self):
-        return {'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
-
     def requires(self):
-        return Unzip()
+        return Download()
 
     def app_options(self):
         return [
@@ -82,36 +77,21 @@ class Convert(SparkSubmitTask):
         ]
 
     def output(self):
-        # return HdfsFlagTarget('/tmp/vectors_parquet')
-        # return S3FlagTarget('/tmp/vectors_parquet')
-        return LocalTarget('/tmp/vectors_parquet', format=Nop)
+        return S3FlagTarget('s3a://spark/vectors/')
 
 
-class HnswIndex(SparkSubmitTask):
+class HnswIndex(BaseSparkSubmitTask):
     """
     Construct the hnsw index and persists it to disk.
     """
-
-    master = 'spark://spark-master:7077'
-
-    deploy_mode = 'client'
 
     name = 'Hnsw index'
 
     app = 'hnsw_index.py'
 
-    packages = [PACKAGE]
-
     m = IntParameter(default=16)
 
     ef_construction = IntParameter(default=200)
-
-    @property
-    def conf(self):
-        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return Convert()
@@ -123,25 +103,18 @@ class HnswIndex(SparkSubmitTask):
             '--m', self.m,
             '--ef_construction', self.ef_construction,
             '--num_partitions', 1,
-            '--num_threads', num_cores
+            # the worker has 8 cores but we need at least 1 core to save the index
+            '--num_threads', 7
         ]
 
     def output(self):
-        # return HdfsFlagTarget('/tmp/hnsw_index')
-        # return S3FlagTarget('/tmp/hnsw_index')
-        return LocalTarget('/tmp/hnsw_index', format=Nop)
+        return S3FlagTarget('s3a://spark/hnsw_index/', flag='metadata/_SUCCESS')
 
 
-class Query(SparkSubmitTask):
+class Query(BaseSparkSubmitTask):
     """
     Query the constructed knn index.
     """
-
-    master = 'spark://spark-master:7077'
-
-    deploy_mode = 'client'
-
-    packages = [PACKAGE]
 
     name = 'Query index'
 
@@ -149,16 +122,8 @@ class Query(SparkSubmitTask):
 
     k = IntParameter(default=10)
 
-    @property
-    def conf(self):
-        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
-
     def requires(self):
-        return {'vectors': Convert(),
-                'index': HnswIndex()}
+        return {'vectors': Convert(), 'index': HnswIndex()}
 
     def app_options(self):
         return [
@@ -169,32 +134,17 @@ class Query(SparkSubmitTask):
         ]
 
     def output(self):
-        # return HdfsFlagTarget('/tmp/query_results')
-        # return S3FlagTarget('/tmp/query_results')
-        return LocalTarget('/tmp/query_results')
+        return S3FlagTarget('s3a://spark/query_results/')
 
 
-class BruteForceIndex(SparkSubmitTask):
+class BruteForceIndex(BaseSparkSubmitTask):
     """
     Construct the brute force index and persists it to disk.
     """
 
-    master = 'spark://spark-master:7077'
-
-    deploy_mode = 'client'
-
     name = 'Brute force index'
 
     app = 'bruteforce_index.py'
-
-    packages = [PACKAGE]
-
-    @property
-    def conf(self):
-        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return Convert()
@@ -204,25 +154,20 @@ class BruteForceIndex(SparkSubmitTask):
             '--input', self.input().path,
             '--output', self.output().path,
             '--num_partitions', 1,
-            '--num_threads', num_cores
+            # the worker has 8 cores but we need at least 1 core to save the index
+            '--num_threads', 7
         ]
 
     def output(self):
-        # return HdfsFlagTarget('/tmp/brute_force_index')
-        # return S3FlagTarget('/tmp/brute_force_index')
-        return LocalTarget('/tmp/brute_force_index', format=Nop)
+        return S3FlagTarget('s3a://spark/brute_force_index/', flag='metadata/_SUCCESS')
 
 
-class Evaluate(SparkSubmitTask):
+class Evaluate(BaseSparkSubmitTask):
     """
     Evaluate the accuracy of the approximate k-nearest neighbors model vs a bruteforce baseline.
     """
 
-    master = 'spark://spark-master:7077'
-
-    deploy_mode = 'client'
-
-    k = IntParameter(default=10)
+    k = IntParameter(default=5)
 
     fraction = FloatParameter(default=0.0001)
 
@@ -231,15 +176,6 @@ class Evaluate(SparkSubmitTask):
     name = 'Evaluate performance'
 
     app = 'evaluate_performance.py'
-
-    packages = [PACKAGE]
-
-    @property
-    def conf(self):
-        return {'spark.serializer': 'org.apache.spark.serializer.KryoSerializer',
-                'spark.kryo.registrator': 'com.github.jelmerk.spark.HnswLibKryoRegistrator',
-                'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-                'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog'}
 
     def requires(self):
         return {'vectors': Convert(),
@@ -258,6 +194,4 @@ class Evaluate(SparkSubmitTask):
         ]
 
     def output(self):
-        # return HdfsFlagTarget('/tmp/metrics')
-        # return S3FlagTarget('/tmp/metrics')
-        return LocalTarget('/tmp/metrics', format=Nop)
+        return S3FlagTarget('s3a://spark/metrics/')

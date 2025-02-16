@@ -7,10 +7,6 @@ services:
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
-    volumes:
-      - type: volume
-        source: data
-        target: /data
     networks:
       - spark-network
 
@@ -20,34 +16,61 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=4
+      - SPARK_WORKER_MEMORY=16G
+      - SPARK_WORKER_CORES=8
     depends_on:
       - spark-master
-    volumes:
-      - type: volume
-        source: data
-        target: /data
     networks:
       - spark-network
 
   vscode:
-    image: mcr.microsoft.com/devcontainers/python:1-3.10-bullseye
+    image: mcr.microsoft.com/devcontainers/python:1-3.12-bullseye
     command: sleep infinity
     volumes:
       - type: bind
         source: ..
         target: /Workspace
-      - type: volume
-        source: data
-        target: /data
+    networks:
+      - spark-network
+
+  minio:
+    image: 'bitnami/minio:2025.2.7'
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: accesskey
+      MINIO_ROOT_PASSWORD: secretkey
+      MINIO_SKIP_CLIENT: "yes"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - spark-network
+    volumes:
+      - minio-data:/bitnami/minio/data
+
+  mc:
+    image: bitnami/minio-client:2025.2.8
+    container_name: minio-client
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: |
+      bash -c '
+        mc alias set myminio http://minio:9000 accesskey secretkey
+        mc mb myminio/spark
+        mc policy set public myminio/spark
+      '
     networks:
       - spark-network
 
   # In firefox go to settings > Network settings >  Connection settings and use
   # SOCKS Host: localhost Port 1080
   # Make sure Proxy DNS when using SOCKS v5 is enabled
-  # Then go to http://spark-master:8080  to access the cluster ui
+  # Then go to
+  #  - http://spark-master:8080  to access the cluster ui
+  #  - http://minio:9001         to access the mino ui
   socks5-proxy:
     image: serjs/go-socks5-proxy
     container_name: socks5-proxy
@@ -61,4 +84,5 @@ networks:
     driver: bridge
 
 volumes:
-  data:
+  minio-data:
+    driver: local

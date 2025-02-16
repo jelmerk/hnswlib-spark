@@ -11,15 +11,11 @@ Make sure you have the following software installed
 - [docker](https://www.docker.com/products/docker-desktop/)
 - [vscode](https://code.visualstudio.com/) with the [devcontainer](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) plugin
 
+And make sure you give docker plenty of resources
 
-1. Create the spark environment with
+1. Open this folder in vs code and choose reopen in container
 
-
-    docker-compose up
-
-2. Open this folder in vs code and choose reopen in container
-
-3. Open a new terminal inside vscode and execute the following command from the app folder
+2. Open a new terminal inside vscode and execute the following command from the `app` folder
 
 
     python -m luigi --module flow Query --local-scheduler

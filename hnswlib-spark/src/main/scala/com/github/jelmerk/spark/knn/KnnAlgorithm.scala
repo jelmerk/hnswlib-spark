@@ -370,6 +370,15 @@ private[knn] class KnnModelWriter[
 
   override protected def saveImpl(path: String): Unit = {
 
+    val indicesPath = new Path(path, "indices").toString
+
+    val client = instance.clientFactory.create(instance.indexAddresses)
+    try {
+      client.saveIndex(indicesPath)
+    } finally {
+      client.shutdown()
+    }
+
     val metadata = ModelMetaData(
       `class` = instance.getClass.getName,
       timestamp = System.currentTimeMillis(),
@@ -391,14 +400,6 @@ private[knn] class KnnModelWriter[
     val metadataPath = new Path(path, "metadata").toString
     sc.parallelize(immutable.Seq(write(metadata)), numSlices = 1).saveAsTextFile(metadataPath)
 
-    val indicesPath = new Path(path, "indices").toString
-
-    val client = instance.clientFactory.create(instance.indexAddresses)
-    try {
-      client.saveIndex(indicesPath)
-    } finally {
-      client.shutdown()
-    }
   }
 }
 

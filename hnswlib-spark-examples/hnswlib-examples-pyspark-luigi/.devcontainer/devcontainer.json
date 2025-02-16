@@ -2,14 +2,20 @@
   "dockerComposeFile": [
     "docker-compose.yml"
   ],
-  "remoteUser": "root",
+  "containerEnv": {
+    "AWS_ACCESS_KEY_ID": "accesskey",
+    "AWS_SECRET_ACCESS_KEY": "secretkey",
+    "AWS_REGION": "us-east-1",
+    "AWS_ENDPOINT_URL": "http://minio:9000"
+  },
   "service": "vscode",
   "workspaceFolder": "/Workspace",
   "shutdownAction": "stopCompose",
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "17"
-    }
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {}
   },
   "customizations": {
     "vscode": {
