@@ -1,6 +1,6 @@
 luigi==3.6.0
 requests==2.32.3
 pyspark[ml]==3.5.4
-hnswlib-spark==2.0.0a2
+hnswlib-spark==2.0.0a5
 boto3==1.36.21
 setuptools==75.8.0

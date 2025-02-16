@@ -41,8 +41,7 @@ class BaseSparkSubmitTask(SparkSubmitTask):
     packages = [
         'org.apache.hadoop:hadoop-aws:3.3.4',
         'com.amazonaws:aws-java-sdk-bundle:1.12.262',
-        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.4',
-        'io.delta:delta-spark_2.12:3.3.0'
+        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.5',
     ]
 
     executor_memory = "12G"
@@ -50,8 +49,6 @@ class BaseSparkSubmitTask(SparkSubmitTask):
     @property
     def conf(self):
         return {
-            'spark.sql.extensions': 'io.delta.sql.DeltaSparkSessionExtension',
-            'spark.sql.catalog.spark_catalog': 'org.apache.spark.sql.delta.catalog.DeltaCatalog',
             'spark.hadoop.fs.s3a.endpoint': 'http://minio:9000',
             'spark.hadoop.fs.s3a.path.style.access': 'true',
             'spark.hadoop.fs.s3a.impl': 'org.apache.hadoop.fs.s3a.S3AFileSystem'
@@ -103,8 +100,7 @@ class HnswIndex(BaseSparkSubmitTask):
             '--m', self.m,
             '--ef_construction', self.ef_construction,
             '--num_partitions', 1,
-            # the worker has 8 cores but we need at least 1 core to save the index
-            '--num_threads', 7
+            '--num_threads', 8
         ]
 
     def output(self):
@@ -154,8 +150,7 @@ class BruteForceIndex(BaseSparkSubmitTask):
             '--input', self.input().path,
             '--output', self.output().path,
             '--num_partitions', 1,
-            # the worker has 8 cores but we need at least 1 core to save the index
-            '--num_threads', 7
+            '--num_threads', 8
         ]
 
     def output(self):
