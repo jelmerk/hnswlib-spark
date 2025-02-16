@@ -2,9 +2,10 @@ package com.github.jelmerk.spark.knn.evaluation
 
 import scala.reflect.runtime.universe._
 
+import com.github.jelmerk.spark.util.DefaultParamsWritable
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.param.{Param, ParamMap}
-import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
+import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, IntegerType, LongType, StringType, StructField, StructType}

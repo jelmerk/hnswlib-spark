@@ -1,6 +1,5 @@
 package com.github.jelmerk.spark.conversion
 
-import com.github.jelmerk.spark.linalg.Normalizer
 import com.github.jelmerk.spark.util.DefaultParamsWritable
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Transformer
