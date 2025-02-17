@@ -7,7 +7,7 @@ from pyspark_hnsw.conversion import VectorConverter
 from pyspark_hnsw.linalg import Normalizer
 
 
-def main(spark):
+def main(spark: SparkSession):
     parser = argparse.ArgumentParser(description='Convert and normalize input data and save it as parquet')
     parser.add_argument('--input', type=str)
     parser.add_argument('--output', type=str)

@@ -5,7 +5,7 @@ from pyspark.sql import SparkSession
 from pyspark_hnsw.knn import *
 
 
-def main(spark):
+def main(spark: SparkSession):
     parser = argparse.ArgumentParser(description='Construct hnsw index')
     parser.add_argument('--input', type=str)
     parser.add_argument('--output', type=str)

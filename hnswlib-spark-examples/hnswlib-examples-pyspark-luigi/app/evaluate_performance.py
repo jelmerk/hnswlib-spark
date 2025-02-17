@@ -7,7 +7,7 @@ from pyspark_hnsw.knn import BruteForceSimilarityModel, HnswSimilarityModel
 from pyspark_hnsw.evaluation import KnnSimilarityEvaluator
 
 
-def main(spark):
+def main(spark: SparkSession):
     parser = argparse.ArgumentParser(description='Evaluate performance of the index')
     parser.add_argument('--hnsw_model', type=str)
     parser.add_argument('--bruteforce_model', type=str)

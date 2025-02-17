@@ -4,7 +4,7 @@ from pyspark_hnsw.knn import HnswSimilarityModel
 from pyspark.sql import SparkSession
 
 
-def main(spark):
+def main(spark: SparkSession):
     parser = argparse.ArgumentParser(description='Query index')
     parser.add_argument('--input', type=str)
     parser.add_argument('--model', type=str)
