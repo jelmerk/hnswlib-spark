@@ -1,6 +1,6 @@
 import argparse
 
-from pyspark.ml import PipelineModel
+from pyspark_hnsw.knn import HnswSimilarityModel
 from pyspark.sql import SparkSession
 
 
@@ -13,10 +13,8 @@ def main(spark):
 
     args = parser.parse_args()
 
-    model = PipelineModel.read().load(args.model)
-
-    [_, hnsw_stage] = model.stages
-    hnsw_stage.setK(args.k)
+    model = HnswSimilarityModel.read().load(args.model)
+    model.setK(args.k)
 
     query_items = spark.read.parquet(args.input)
 
@@ -25,7 +23,7 @@ def main(spark):
     results.write.mode('overwrite').json(args.output)
 
     # you need to destroy the model or the index tasks running in the background will prevent spark from shutting down
-    hnsw_stage.dispose()
+    model.dispose()
 
 
 if __name__ == '__main__':

@@ -148,7 +148,19 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
     }
 
-    "save and load a model" in {
+    "save and load hnsw" in {
+      withTempFolder { folder =>
+        val path = new File(folder, "hnsw")
+        hnsw.write.overwrite().save(path.toString)
+
+        val loadedHnsw = HnswSimilarity.read.load(path.toString)
+
+        loadedHnsw.getIdentifierCol should be(hnsw.getIdentifierCol)
+        loadedHnsw.getFeaturesCol should be(hnsw.getFeaturesCol)
+      }
+    }
+
+    "save and load hnsw model" in {
       withTempFolder { folder =>
         val items = Seq(
           InputRow(1000000, Array(0.0110f, 0.2341f)),

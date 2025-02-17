@@ -14,7 +14,7 @@ import com.github.jelmerk.serving.client.IndexClientFactory
 import com.github.jelmerk.spark.knn._
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.util.{Identifiable, MLReadable, MLReader, MLWritable, MLWriter}
+import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable, MLReadable, MLReader, MLWritable, MLWriter}
 
 private[bruteforce] trait BruteForceIndexType extends IndexType {
   protected override type TIndex[TId, TVector, TItem <: Item[TId, TVector], TDistance] =
@@ -133,6 +133,8 @@ private[knn] class BruteForceSimilarityModelImpl[
     BruteForceIndex.loadFromInputStream[TId, TVector, TItem, TDistance](in)
 
 }
+
+object BruteForceSimilarity extends DefaultParamsReadable[BruteForceSimilarity]
 
 /** Nearest neighbor search using a brute force approach. This will be very slow. It is in most cases not recommended
   * for production use. But can be used to determine the accuracy of an approximative index.

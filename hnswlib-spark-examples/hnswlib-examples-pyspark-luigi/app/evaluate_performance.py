@@ -1,7 +1,9 @@
 import argparse
 
+
 from pyspark.ml import PipelineModel
 from pyspark.sql import SparkSession
+from pyspark_hnsw.knn import BruteForceSimilarityModel, HnswSimilarityModel
 from pyspark_hnsw.evaluation import KnnSimilarityEvaluator
 
 
@@ -19,25 +21,26 @@ def main(spark):
 
     sample_query_items = spark.read.parquet(args.input).sample(False, args.fraction, args.seed)
 
-    hnsw_model = PipelineModel.read().load(args.hnsw_model)
+    hnsw_model = HnswSimilarityModel.read().load(args.hnsw_model)
+    hnsw_model.setK(args.k)
+    hnsw_model.setPredictionCol('approximate')
 
-    hnsw_stage = hnsw_model.stages[-1]
-    hnsw_stage.setK(args.k)
-    hnsw_stage.setPredictionCol('approximate')
+    bruteforce_model = BruteForceSimilarityModel.read().load(args.bruteforce_model)
+    bruteforce_model.setK(args.k)
+    bruteforce_model.setPredictionCol('exact')
 
-    bruteforce_model = PipelineModel.read().load(args.bruteforce_model)
+    pipeline = PipelineModel(stages=[hnsw_model, bruteforce_model])
 
-    bruteforce_stage = bruteforce_model.stages[-1]
-    bruteforce_stage.setK(args.k)
-    bruteforce_stage.setPredictionCol('exact')
-
-    sample_results = bruteforce_model.transform(hnsw_model.transform(sample_query_items))
+    sample_results = pipeline.transform(sample_query_items)
 
     evaluator = KnnSimilarityEvaluator(approximateNeighborsCol='approximate', exactNeighborsCol='exact')
 
     accuracy = evaluator.evaluate(sample_results)
 
     spark.createDataFrame([[accuracy]], ['accuracy']).repartition(1).write.mode('overwrite').csv(args.output)
+
+    hnsw_model.dispose()
+    bruteforce_model.dispose()
 
 
 if __name__ == '__main__':

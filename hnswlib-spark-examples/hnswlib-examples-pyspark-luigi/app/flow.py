@@ -41,7 +41,7 @@ class BaseSparkSubmitTask(SparkSubmitTask):
     packages = [
         'org.apache.hadoop:hadoop-aws:3.3.4',
         'com.amazonaws:aws-java-sdk-bundle:1.12.262',
-        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.5',
+        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.6',
     ]
 
     executor_memory = "12G"
@@ -100,7 +100,13 @@ class HnswIndex(BaseSparkSubmitTask):
             '--m', self.m,
             '--ef_construction', self.ef_construction,
             '--num_partitions', 1,
-            '--num_threads', 8
+            # Use 6 cores instead of the 8 we have available so that in the evaluate 
+            #
+            # this model uses 6 cores
+            # The brute force model uses 1 core
+            #
+            # Leaving one core for querying
+            '--num_threads', 6 
         ]
 
     def output(self):
@@ -150,7 +156,7 @@ class BruteForceIndex(BaseSparkSubmitTask):
             '--input', self.input().path,
             '--output', self.output().path,
             '--num_partitions', 1,
-            '--num_threads', 8
+            '--num_threads', 1
         ]
 
     def output(self):

@@ -179,6 +179,8 @@ private[knn] class HnswSimilarityModelImpl[
 
 }
 
+object HnswSimilarity extends DefaultParamsReadable[HnswSimilarity]
+
 /** Nearest neighbor search using the approximative hnsw algorithm.
   *
   * @param uid

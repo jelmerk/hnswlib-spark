@@ -3,8 +3,8 @@ import scalapb.compiler.Version.scalapbVersion
 import scalapb.compiler.Version.grpcJavaVersion
 
 ThisBuild / organization := "com.github.jelmerk"
-//ThisBuild / scalaVersion := "2.12.18"
-ThisBuild / scalaVersion := "2.13.10"
+ThisBuild / scalaVersion := "2.12.18"
+//ThisBuild / scalaVersion := "2.13.10"
 
 ThisBuild / fork := true
 

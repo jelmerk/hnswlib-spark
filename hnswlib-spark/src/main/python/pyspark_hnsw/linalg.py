@@ -12,7 +12,11 @@ __all__ = ["Normalizer"]
 # noinspection PyPep8Naming
 @inherit_doc
 class Normalizer(
-    JavaTransformer, HasInputCol, HasOutputCol, JavaMLReadable, JavaMLWritable
+    JavaTransformer,
+    HasInputCol,
+    HasOutputCol,
+    JavaMLReadable["Normalizer"],
+    JavaMLWritable,
 ):
     """
     Normalizes vectors to unit norm
@@ -30,8 +34,20 @@ class Normalizer(
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
 
+    def setInputCol(self, value: str) -> "Normalizer":
+        """
+        Sets the value of :py:attr:`inputCol`.
+        """
+        return self._set(inputCol=value)
+
+    def setOutputCol(self, value: str) -> "Normalizer":
+        """
+        Sets the value of :py:attr:`outputCol`.
+        """
+        return self._set(outputCol=value)
+
     @keyword_only
-    def setParams(self, inputCol="input", outputCol="output"):
+    def setParams(self, inputCol="input", outputCol="output") -> "Normalizer":
         """
         setParams(self, inputCol="input", outputCol="output")
         Sets params for this Normalizer.

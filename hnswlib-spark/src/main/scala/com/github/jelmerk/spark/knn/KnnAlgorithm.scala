@@ -28,7 +28,7 @@ import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasFeaturesCol, HasPredictionCol}
-import org.apache.spark.ml.util.{MLReader, MLWriter}
+import org.apache.spark.ml.util.{DefaultParamsWritable, MLReader, MLWriter}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql._
@@ -652,6 +652,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
     with IndexCreator
     with IndexLoader
     with IndexServing
+    with DefaultParamsWritable
     with ModelCreator[TModel] {
 
   import KnnAlgorithm._

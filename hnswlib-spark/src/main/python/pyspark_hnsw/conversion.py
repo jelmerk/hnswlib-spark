@@ -18,13 +18,17 @@ __all__ = ["VectorConverter"]
 # noinspection PyPep8Naming
 @inherit_doc
 class VectorConverter(
-    JavaTransformer, HasInputCol, HasOutputCol, JavaMLReadable, JavaMLWritable
+    JavaTransformer,
+    HasInputCol,
+    HasOutputCol,
+    JavaMLReadable["VectorConverter"],
+    JavaMLWritable,
 ):
     """
     Converts the input vector to a vector of another type.
     """
 
-    outputType = Param(
+    outputType: Param[str] = Param(
         Params._dummy(),
         "outputType",
         "type of vector to produce. one of array<float>, array<double>, vector",
@@ -43,10 +47,22 @@ class VectorConverter(
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
 
+    def setInputCol(self, value: str) -> "VectorConverter":
+        """
+        Sets the value of :py:attr:`inputCol`.
+        """
+        return self._set(inputCol=value)
+
+    def setOutputCol(self, value: str) -> "VectorConverter":
+        """
+        Sets the value of :py:attr:`outputCol`.
+        """
+        return self._set(outputCol=value)
+
     @keyword_only
     def setParams(
         self, inputCol="input", outputCol="output", outputType="array<float>"
-    ):
+    ) -> "VectorConverter":
         """
         setParams(self, inputCol="input", outputCol="output", outputType="array<float>")
         Sets params for this VectorConverter.

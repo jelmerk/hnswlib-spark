@@ -29,7 +29,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
     .setK(10)
     .setPredictionCol("neighbors")
 
-  "HnswSimilarity" should {
+  "BruteForceSimilarity" should {
 
     "query pre-partitioned data" in {
 
@@ -148,7 +148,19 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
     }
 
-    "save and load a model" in {
+    "save and load bruteforce" in {
+      withTempFolder { folder =>
+        val path = new File(folder, "hnsw")
+        bruteforce.write.overwrite().save(path.toString)
+
+        val loadedBruteforce = BruteForceSimilarity.read.load(path.toString)
+
+        loadedBruteforce.getIdentifierCol should be(bruteforce.getIdentifierCol)
+        loadedBruteforce.getFeaturesCol should be(bruteforce.getFeaturesCol)
+      }
+    }
+
+    "save and load bruteforce model" in {
       withTempFolder { folder =>
         val items = Seq(
           InputRow(1000000, Array(0.0110f, 0.2341f)),

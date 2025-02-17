@@ -1,9 +1,7 @@
 import argparse
 
-from pyspark.ml import Pipeline
 from pyspark.sql import SparkSession
 from pyspark_hnsw.knn import *
-from pyspark_hnsw.linalg import Normalizer
 
 
 def main(spark):
@@ -16,17 +14,13 @@ def main(spark):
 
     args = parser.parse_args()
 
-    normalizer = Normalizer(inputCol='features', outputCol='normalized_features')
-
     bruteforce = BruteForceSimilarity(identifierCol='id', featuresCol='normalized_features',
                                       distanceFunction='inner-product', numPartitions=args.num_partitions,
                                       numThreads=args.num_threads)
 
-    pipeline = Pipeline(stages=[normalizer, bruteforce])
-
     index_items = spark.read.parquet(args.input)
 
-    model = pipeline.fit(index_items)
+    model = bruteforce.fit(index_items)
 
     model.write().overwrite().save(args.output)
 

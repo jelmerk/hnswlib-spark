@@ -2,16 +2,14 @@ package com.github.jelmerk.spark.knn.evaluation
 
 import scala.reflect.runtime.universe._
 
-import com.github.jelmerk.spark.util.DefaultParamsWritable
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.param.{Param, ParamMap}
-import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable}
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import org.apache.spark.sql.Dataset
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, IntegerType, LongType, StringType, StructField, StructType}
 
-/** Companion class for KnnSimilarityEvaluator.
-  */
+/** Companion class for KnnSimilarityEvaluator. */
 object KnnSimilarityEvaluator extends DefaultParamsReadable[KnnSimilarityEvaluator] {
   override def load(path: String): KnnSimilarityEvaluator = super.load(path)
 }
@@ -34,12 +32,10 @@ class KnnSimilarityEvaluator(override val uid: String) extends Evaluator with De
   final val approximateNeighborsCol =
     new Param[String](this, "approximateNeighborsCol", "column containing the approximate neighbors")
 
-  /** @group getParam
-    */
+  /** @group getParam */
   final def getApproximateNeighborsCol: String = $(approximateNeighborsCol)
 
-  /** @group setParam
-    */
+  /** @group setParam */
   final def setApproximateNeighborsCol(value: String): this.type = set(approximateNeighborsCol, value)
 
   /** Param for the column name for the exact results. Default: "exactNeighbors"
@@ -48,12 +44,10 @@ class KnnSimilarityEvaluator(override val uid: String) extends Evaluator with De
     */
   final val exactNeighborsCol = new Param[String](this, "exactNeighborsCol", "column containing the exact neighbors")
 
-  /** @group getParam
-    */
+  /** @group getParam */
   final def getExactNeighborsCol: String = $(exactNeighborsCol)
 
-  /** @group setParam
-    */
+  /** @group setParam */
   final def setExactNeighborsCol(value: String): this.type = set(exactNeighborsCol, value)
 
   /** Returns the accuracy of the approximate results.
