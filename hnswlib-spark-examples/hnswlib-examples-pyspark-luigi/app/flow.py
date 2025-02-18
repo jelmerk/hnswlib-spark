@@ -38,21 +38,9 @@ class BaseSparkSubmitTask(SparkSubmitTask):
 
     deploy_mode = 'client'
 
-    packages = [
-        'org.apache.hadoop:hadoop-aws:3.3.4',
-        'com.amazonaws:aws-java-sdk-bundle:1.12.262',
-        'com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.6',
-    ]
+    packages = ['com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.6']
 
     executor_memory = "12G"
-
-    @property
-    def conf(self):
-        return {
-            'spark.hadoop.fs.s3a.endpoint': 'http://minio:9000',
-            'spark.hadoop.fs.s3a.path.style.access': 'true',
-            'spark.hadoop.fs.s3a.impl': 'org.apache.hadoop.fs.s3a.S3AFileSystem'
-        }
 
 
 class Convert(BaseSparkSubmitTask):
@@ -106,7 +94,7 @@ class HnswIndex(BaseSparkSubmitTask):
             # The brute force model uses 1 core
             #
             # Leaving one core for querying
-            '--num_threads', 6 
+            '--num_threads', 6
         ]
 
     def output(self):

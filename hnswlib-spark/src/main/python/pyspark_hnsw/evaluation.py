@@ -44,11 +44,6 @@ class KnnSimilarityEvaluator(
             "com.github.jelmerk.spark.knn.evaluation.KnnSimilarityEvaluator", self.uid
         )
 
-        self._setDefault(
-            approximateNeighborsCol="approximateNeighbors",
-            exactNeighborsCol="exactNeighbors",
-        )
-
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
 

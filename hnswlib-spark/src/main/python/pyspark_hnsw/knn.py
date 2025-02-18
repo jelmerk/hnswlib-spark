@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, TypeVar, Type
 
+from py4j.java_gateway import JavaObject
 from pyspark.ml.wrapper import JavaEstimator, JavaModel
 from pyspark.ml.param.shared import (
     Params,
@@ -9,12 +10,13 @@ from pyspark.ml.param.shared import (
     TypeConverters,
 )
 from pyspark.mllib.common import inherit_doc
+from pyspark.sql import SparkSession
 
 # noinspection PyProtectedMember
 from pyspark import keyword_only
 
 # noinspection PyProtectedMember
-from pyspark.ml.util import JavaMLReadable, JavaMLWritable
+from pyspark.ml.util import JavaMLReadable, JavaMLWritable, MLReadable, MLReader, _jvm
 
 
 __all__ = [
@@ -22,13 +24,53 @@ __all__ = [
     "HnswSimilarityModel",
     "BruteForceSimilarity",
     "BruteForceSimilarityModel",
+    "HnswLibMLReader",
 ]
+
+RL = TypeVar("RL", bound="MLReadable")
+JR = TypeVar("JR", bound="HnswLibMLReader")
 
 
 class KnnModel(JavaModel):
     def dispose(self) -> None:
         assert self._java_obj is not None
         return self._java_obj.dispose()
+
+
+@inherit_doc
+class HnswLibMLReader(MLReader[RL]):
+    """
+    (Private) Specialization of :py:class:`MLReader` for :py:class:`JavaParams` types
+    """
+
+    def __init__(self, clazz: Type["JavaMLReadable[RL]"], java_class: str) -> None:
+        super(HnswLibMLReader, self).__init__()
+        self._clazz = clazz
+        self.java_class = java_class
+        self._jread = self._load_java_obj(clazz, java_class).read()
+
+    def load(self, path: str) -> RL:
+        """Load the ML instance from the input path."""
+        if not isinstance(path, str):
+            raise TypeError("path should be a string, got type %s" % type(path))
+        java_obj = self._jread.load(path)
+        return self._clazz._from_java(java_obj)
+
+    def session(self: JR, sparkSession: SparkSession) -> JR:
+        """Sets the Spark Session to use for loading."""
+        self._jread.session(sparkSession._jsparkSession)
+        return self
+
+    @classmethod
+    def _load_java_obj(
+        cls, clazz: Type["JavaMLReadable[RL]"], java_class: str
+    ) -> "JavaObject":
+        """Load the peer Java object of the ML instance."""
+
+        java_obj = _jvm()
+        for name in java_class.split("."):
+            java_obj = getattr(java_obj, name)
+        return java_obj
 
 
 # noinspection PyPep8Naming
@@ -225,7 +267,6 @@ class _HnswParams(_HnswModelParams, _KnnParams):
 class BruteForceSimilarityModel(
     KnnModel,
     _KnnModelParams,
-    JavaMLReadable["BruteForceSimilarityModel"],
     JavaMLWritable,
 ):
     """
@@ -260,13 +301,16 @@ class BruteForceSimilarityModel(
         """
         return self._set(featuresCol=value)
 
+    @classmethod
+    def read(cls) -> HnswLibMLReader["BruteForceSimilarityModel"]:
+        return HnswLibMLReader(cls, cls._classpath_model)
+
 
 # noinspection PyPep8Naming
 @inherit_doc
 class BruteForceSimilarity(
     JavaEstimator[BruteForceSimilarityModel],
     _KnnParams,
-    JavaMLReadable["BruteForceSimilarity"],
     JavaMLWritable,
 ):
     """
@@ -274,6 +318,8 @@ class BruteForceSimilarity(
     """
 
     _input_kwargs: Dict[str, Any]
+
+    _classpath_model = "com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarity"
 
     # noinspection PyUnusedLocal
     @keyword_only
@@ -294,14 +340,6 @@ class BruteForceSimilarity(
         super(BruteForceSimilarity, self).__init__()
         self._java_obj = self._new_java_obj(
             "com.github.jelmerk.spark.knn.bruteforce.BruteForceSimilarity", self.uid
-        )
-
-        self._setDefault(
-            identifierCol="id",
-            numPartitions=1,
-            numReplicas=0,
-            k=5,
-            distanceFunction="cosine",
         )
 
         kwargs = self._input_kwargs
@@ -394,11 +432,13 @@ class BruteForceSimilarity(
     def _create_model(self, java_model) -> BruteForceSimilarityModel:
         return BruteForceSimilarityModel(java_model)
 
+    @classmethod
+    def read(cls) -> HnswLibMLReader["BruteForceSimilarity"]:
+        return HnswLibMLReader(cls, cls._classpath_model)
+
 
 # noinspection PyPep8Naming
-class HnswSimilarityModel(
-    KnnModel, _HnswModelParams, JavaMLReadable["HnswSimilarityModel"], JavaMLWritable
-):
+class HnswSimilarityModel(KnnModel, _HnswModelParams, JavaMLWritable):
     """
     Model fitted by Hnsw.
     """
@@ -429,18 +469,23 @@ class HnswSimilarityModel(
         """
         return self._set(featuresCol=value)
 
+    @classmethod
+    def read(cls) -> HnswLibMLReader["HnswSimilarityModel"]:
+        return HnswLibMLReader(cls, cls._classpath_model)
+
 
 # noinspection PyPep8Naming
 @inherit_doc
 class HnswSimilarity(
     JavaEstimator[HnswSimilarityModel],
     _HnswParams,
-    JavaMLReadable["HnswSimilarity"],
     JavaMLWritable,
 ):
     """
     Approximate nearest neighbour search.
     """
+
+    _classpath_model = "com.github.jelmerk.spark.knn.hnsw.HnswSimilarity"
 
     # noinspection PyUnusedLocal
     @keyword_only
@@ -464,18 +509,6 @@ class HnswSimilarity(
         super(HnswSimilarity, self).__init__()
         self._java_obj = self._new_java_obj(
             "com.github.jelmerk.spark.knn.hnsw.HnswSimilarity", self.uid
-        )
-
-        self._setDefault(
-            identifierCol="id",
-            m=16,
-            ef=10,
-            efConstruction=200,
-            numPartitions=1,
-            numReplicas=0,
-            k=5,
-            distanceFunction="cosine",
-            initialModelPath=None,
         )
 
         kwargs = self._input_kwargs
@@ -588,6 +621,10 @@ class HnswSimilarity(
 
     def _create_model(self, java_model) -> HnswSimilarityModel:
         return HnswSimilarityModel(java_model)
+
+    @classmethod
+    def read(cls) -> HnswLibMLReader["HnswSimilarity"]:
+        return HnswLibMLReader(cls, cls._classpath_model)
 
 
 HnswSimilarityModelImpl = HnswSimilarityModel

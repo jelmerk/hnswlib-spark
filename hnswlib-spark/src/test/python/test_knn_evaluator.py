@@ -1,10 +1,9 @@
-# coding=utf-8
-
 from pyspark_hnsw.evaluation import KnnSimilarityEvaluator
 from pyspark.sql.types import *
+from pyspark.sql import SparkSession
 
 
-def test_evaluator(spark):
+def test_evaluator(spark: SparkSession) -> None:
 
     neighbors_list_schema = ArrayType(StructType([StructField("neighbor", IntegerType()), StructField("distance", FloatType())]))
 

@@ -1,9 +1,9 @@
-# coding=utf-8
-
 from pyspark_hnsw.conversion import VectorConverter
 from pyspark.ml.linalg import Vectors
+from pyspark.sql import SparkSession
 
-def test_vector_converter(spark):
+
+def test_vector_converter(spark: SparkSession) -> None:
 
     df = spark.createDataFrame([[Vectors.dense([0.01, 0.02, 0.03])]], ['vector'])
 

@@ -1,11 +1,11 @@
-# coding=utf-8
-
+from pathlib import Path
 from pyspark_hnsw.knn import HnswSimilarity
 from pyspark.ml.linalg import Vectors
 from pyspark.sql import functions as F
+from pyspark.sql import SparkSession
 
 
-def test_incremental_models(spark, tmp_path):
+def test_incremental_models(spark: SparkSession, tmp_path: Path) -> None:
 
     df1 = spark.createDataFrame([
         [1, Vectors.dense([0.1, 0.2, 0.3])]
