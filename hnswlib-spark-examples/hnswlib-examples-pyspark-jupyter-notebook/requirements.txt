@@ -1,6 +1,6 @@
 requests==2.32.3
 pyspark[ml]==3.5.4
-hnswlib-spark==2.0.0a7
+hnswlib-spark==2.0.0a8
 ipykernel==6.29.5
 boto3==1.36.21
 setuptools==75.8.0

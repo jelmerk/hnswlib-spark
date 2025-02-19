@@ -38,7 +38,7 @@ class BaseSparkSubmitTask(SparkSubmitTask):
 
     deploy_mode = 'client'
 
-    packages = ['com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.7']
+    packages = ['com.github.jelmerk:hnswlib-spark_3_5_2.12:2.0.0-alpha.8']
 
     executor_memory = "12G"
 
