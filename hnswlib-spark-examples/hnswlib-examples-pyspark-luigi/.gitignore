@@ -1,0 +1,17 @@
+# vscode
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Virtual env
+.venv
+
+# spark jars
+jars
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/

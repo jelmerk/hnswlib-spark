@@ -6,7 +6,8 @@
     "AWS_ACCESS_KEY_ID": "accesskey",
     "AWS_SECRET_ACCESS_KEY": "secretkey",
     "AWS_REGION": "us-east-1",
-    "AWS_ENDPOINT_URL": "http://minio:9000"
+    "AWS_ENDPOINT_URL": "http://minio:9000",
+    "SPARK_CONF_DIR": "/Workspace/conf/"
   },
   "service": "vscode",
   "workspaceFolder": "/Workspace",
@@ -31,6 +32,7 @@
   },
   "name": "Hnswlib Luigi Development Container",
   "onCreateCommand": {
-    "venv": "python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt"
+    "venv": "python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt",
+    "jars": "curl -o /Workspace/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && curl -o /Workspace/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar"
   }
 }
