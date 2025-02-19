@@ -7,11 +7,13 @@ import scala.util.Try
 import com.github.jelmerk.registration.server.PartitionAndReplica
 import com.github.jelmerk.serving.client.IndexClientFactory
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
 
 private[knn] class QueryIterator[TId, TVector, TDistance](
     indices: Map[PartitionAndReplica, InetSocketAddress],
     indexClientFactory: IndexClientFactory[TId, TVector, TDistance],
     records: Iterator[Row],
+    outputSchema: StructType,
     batchSize: Int,
     k: Int,
     vectorCol: String,
@@ -26,7 +28,7 @@ private[knn] class QueryIterator[TId, TVector, TDistance](
     else
       records
         .grouped(batchSize)
-        .map(batch => client.search(vectorCol, partitionsCol, batch, k))
+        .map(batch => client.search(vectorCol, partitionsCol, batch, outputSchema, k))
         .reduce((a, b) => a ++ b)
 
   override def hasNext: Boolean = delegate.hasNext

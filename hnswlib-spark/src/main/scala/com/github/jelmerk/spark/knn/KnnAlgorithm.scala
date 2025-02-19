@@ -630,7 +630,16 @@ private[knn] trait KnnModelOps[
 
     dataset.toDF
       .mapPartitions { it =>
-        new QueryIterator(localIndexAddr, localClientFactory, it, batchSize = 1000, k, featuresCol, partitionsColOpt)
+        new QueryIterator(
+          localIndexAddr,
+          localClientFactory,
+          it,
+          outputSchema,
+          batchSize = 1000,
+          k,
+          featuresCol,
+          partitionsColOpt
+        )
       }
   }
 
