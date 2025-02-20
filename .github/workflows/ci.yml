@@ -16,6 +16,7 @@ on:
 jobs:
   ci-pipeline:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
