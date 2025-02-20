@@ -4,7 +4,6 @@ import java.io.InputStream
 import java.net.{InetAddress, InetSocketAddress}
 import java.nio.charset.StandardCharsets
 
-import scala.collection.immutable
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 import scala.language.{higherKinds, implicitConversions}
@@ -240,7 +239,7 @@ private[knn] trait KnnModelParams extends Params with HasFeaturesCol with HasPre
     *   The type of the identifier column
     * @return
     *   The transformed schema with an added column for predictions.
-    * @throws IllegalArgumentException
+    * @throws java.lang.IllegalArgumentException
     *   If the output column (prediction column) already exists in the input schema.
     */
   protected def validateAndTransformSchema(schema: StructType, identifierDataType: DataType): StructType = {
@@ -336,7 +335,7 @@ private[knn] trait KnnAlgorithmParams extends KnnModelParams {
   setDefault(identifierCol -> "id", distanceFunction -> "cosine", numReplicas -> 0)
 }
 
-object KnnModelWriter {
+private[knn] object KnnModelWriter {
   private implicit val format: Formats = DefaultFormats.withLong
 }
 
@@ -417,7 +416,7 @@ private[knn] class KnnModelWriter[
   }
 }
 
-object KnnModelReader {
+private[knn] object KnnModelReader {
   private implicit val format: Formats = DefaultFormats.withLong
 }
 
@@ -650,7 +649,7 @@ private[knn] trait KnnModelOps[
 
 }
 
-object KnnAlgorithm {
+private[knn] object KnnAlgorithm {
   private implicit val format: Formats = DefaultFormats.withLong
 }
 

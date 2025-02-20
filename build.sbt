@@ -80,7 +80,21 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "python",
     Test / envVars += "SPARK_TESTING" -> "1",
-    Compile / doc / javacOptions ++= Seq("-Xdoclint:none"),
+    Compile / doc / scalacOptions ++= Seq(
+      "-doc-footer", s"Hnswlib spark v.${version.value}"
+    ),
+    apiMappings ++= {
+      Option(System.getProperty("sun.boot.class.path")).flatMap { classPath =>
+        classPath.split(java.io.File.pathSeparator).find(_.endsWith(java.io.File.separator + "rt.jar"))
+      }.map { jarPath =>
+        Map(
+          file(jarPath) -> url("https://docs.oracle.com/javase/8/docs/api")
+        )
+      }.getOrElse {
+        streams.value.log.warn("Failed to add bootstrap class path of Java to apiMappings")
+        Map.empty[File,URL]
+      }
+    },
     assembly / mainClass := None,
     assembly / assemblyOption ~= {
       _.withIncludeScala(false)
