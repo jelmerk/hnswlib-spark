@@ -12,8 +12,13 @@ def test_bruteforce_index_and_query(spark: SparkSession) -> None:
         [3, Vectors.dense([0.2, 0.1])],
     ], ['row_id', 'features'])
 
-    bruteforce = BruteForceSimilarity(identifierCol='row_id', featuresCol='features',
-                                      distanceFunction='cosine', numPartitions=2, numThreads=1)
+    bruteforce = BruteForceSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        numPartitions=2,
+        numThreads=1
+    )
 
     model = bruteforce.fit(df)
 
@@ -26,8 +31,13 @@ def test_bruteforce_index_and_query(spark: SparkSession) -> None:
 
 def test_bruteforce_save_and_load( tmp_path: Path) -> None:
 
-    bruteforce = BruteForceSimilarity(identifierCol='row_id', featuresCol='features',
-                                      distanceFunction='cosine', numPartitions=2, numThreads=1)
+    bruteforce = BruteForceSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        numPartitions=2,
+        numThreads=1
+    )
 
     bruteforce.write().overwrite().save(tmp_path.as_posix())
     BruteForceSimilarity.read().load(tmp_path.as_posix())
@@ -40,8 +50,13 @@ def test_bruteforce_save_and_load_model(spark: SparkSession, tmp_path: Path) -> 
         [3, Vectors.dense([0.2, 0.1])],
     ], ['row_id', 'features'])
 
-    bruteforce = BruteForceSimilarity(identifierCol='row_id', featuresCol='features',
-                                      distanceFunction='cosine', numPartitions=2, numThreads=1)
+    bruteforce = BruteForceSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        numPartitions=2,
+        numThreads=1
+    )
 
     model = bruteforce.fit(df)
 

@@ -37,8 +37,7 @@ def main(spark: SparkSession):
 
     accuracy = evaluator.evaluate(sample_results)
 
-    spark.createDataFrame([[accuracy]], ['accuracy']).repartition(1).write.mode('overwrite').csv(args.output)
-
+    spark.createDataFrame([[accuracy]], ['accuracy']).coalesce(1).write.mode('overwrite').option('header', 'true').csv(args.output)
     hnsw_model.dispose()
     bruteforce_model.dispose()
 

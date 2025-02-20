@@ -12,8 +12,17 @@ def test_hnsw_index_and_query(spark: SparkSession) -> None:
         [3, Vectors.dense([0.2, 0.1])],
     ], ['row_id', 'features'])
 
-    hnsw = HnswSimilarity(identifierCol='row_id', featuresCol='features', distanceFunction='cosine', m=32, ef=5, k=5,
-                          efConstruction=200, numPartitions=2, numThreads=1)
+    hnsw = HnswSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        m=32,
+        ef=5,
+        k=5,
+        efConstruction=200,
+        numPartitions=2,
+        numThreads=1
+    )
 
     model = hnsw.fit(df)
 
@@ -26,8 +35,17 @@ def test_hnsw_index_and_query(spark: SparkSession) -> None:
 
 def test_hnsw_save_and_load( tmp_path: Path) -> None:
 
-    hnsw = HnswSimilarity(identifierCol='row_id', featuresCol='features', distanceFunction='cosine', m=32, ef=5, k=5,
-                          efConstruction=200, numPartitions=2, numThreads=1)
+    hnsw = HnswSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        m=32,
+        ef=5,
+        k=5,
+        efConstruction=200,
+        numPartitions=2,
+        numThreads=1
+    )
 
     hnsw.write().overwrite().save(tmp_path.as_posix())
     HnswSimilarity.read().load(tmp_path.as_posix())
@@ -40,8 +58,17 @@ def test_hnsw_save_and_load_model(spark: SparkSession, tmp_path: Path) -> None:
         [3, Vectors.dense([0.2, 0.1])],
     ], ['row_id', 'features'])
 
-    hnsw = HnswSimilarity(identifierCol='row_id', featuresCol='features', distanceFunction='cosine', m=32, ef=5, k=5,
-                          efConstruction=200, numPartitions=2, numThreads=1)
+    hnsw = HnswSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        m=32,
+        ef=5,
+        k=5,
+        efConstruction=200,
+        numPartitions=2,
+        numThreads=1
+    )
 
     model = hnsw.fit(df)
 

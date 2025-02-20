@@ -14,9 +14,13 @@ def main(spark: SparkSession):
 
     args = parser.parse_args()
 
-    bruteforce = BruteForceSimilarity(identifierCol='id', featuresCol='normalized_features',
-                                      distanceFunction='inner-product', numPartitions=args.num_partitions,
-                                      numThreads=args.num_threads)
+    bruteforce = BruteForceSimilarity(
+        identifierCol='id',
+        featuresCol='normalized_features',
+        distanceFunction='inner-product',
+        numPartitions=args.num_partitions,
+        numThreads=args.num_threads
+    )
 
     index_items = spark.read.parquet(args.input)
 

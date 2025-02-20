@@ -1,6 +1,5 @@
 import argparse
 
-from pyspark.ml import Pipeline
 from pyspark.sql import SparkSession
 from pyspark_hnsw.knn import *
 
@@ -16,9 +15,15 @@ def main(spark: SparkSession):
 
     args = parser.parse_args()
 
-    hnsw = HnswSimilarity(identifierCol='id', featuresCol='normalized_features',
-                          distanceFunction='inner-product', m=args.m, efConstruction=args.ef_construction,
-                          numPartitions=args.num_partitions, numThreads=args.num_threads)
+    hnsw = HnswSimilarity(
+        identifierCol='id',
+        featuresCol='normalized_features',
+        distanceFunction='inner-product',
+        m=args.m,
+        efConstruction=args.ef_construction,
+        numPartitions=args.num_partitions,
+        numThreads=args.num_threads
+    )
 
     index_items = spark.read.parquet(args.input)
 
