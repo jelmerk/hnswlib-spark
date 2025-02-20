@@ -71,7 +71,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
           .as[OutputRow[Long, DenseVector, Double]]
           .collect()
           .groupBy(_.id)
-          .mapValues(_.head)
+          .collect { case (id, Array(element)) => id -> element }
 
         results(1000000L).neighbors.map(_.neighbor) should be(Seq(1000000L, 3000000L, 2000000L))
         results(2000000L).neighbors.map(_.neighbor) should be(Seq(2000000L, 3000000L, 1000000L))
@@ -93,7 +93,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
           .as[OutputRow[String, SparseVector, Double]]
           .collect()
           .groupBy(_.id)
-          .mapValues(_.head)
+          .collect { case (id, Array(element)) => id -> element }
 
         results("1000000").neighbors.map(_.neighbor) should be(Seq("1000000", "3000000", "2000000"))
         results("2000000").neighbors.map(_.neighbor) should be(Seq("2000000", "3000000", "1000000"))
@@ -116,7 +116,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
           .as[OutputRow[Int, Array[Float], Float]]
           .collect()
           .groupBy(_.id)
-          .mapValues(_.head)
+          .collect { case (id, Array(element)) => id -> element }
 
         results(1000000).neighbors.map(_.neighbor) should be(Seq(1000000, 3000000, 2000000))
         results(2000000).neighbors.map(_.neighbor) should be(Seq(2000000, 3000000, 1000000))
@@ -138,7 +138,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
           .as[OutputRow[Int, Array[Double], Double]]
           .collect()
           .groupBy(_.id)
-          .mapValues(_.head)
+          .collect { case (id, Array(element)) => id -> element }
 
         results(1000000).neighbors.map(_.neighbor) should be(Seq(1000000, 3000000, 2000000))
         results(2000000).neighbors.map(_.neighbor) should be(Seq(2000000, 3000000, 1000000))
@@ -171,7 +171,7 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
         val path = new File(folder, "model").getCanonicalPath
 
         withDisposableResource(bruteforce.fit(items)) { model =>
-          model.write.overwrite.save(path)
+          model.write.overwrite().save(path)
         }
 
         withDisposableResource(BruteForceSimilarityModel.load(path)) { model =>

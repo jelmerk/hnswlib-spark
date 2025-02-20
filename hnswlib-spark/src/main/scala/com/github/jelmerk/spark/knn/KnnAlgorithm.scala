@@ -629,7 +629,8 @@ private[knn] trait KnnModelOps[
 
     implicit val encoder: Encoder[Row] = ExpressionEncoder(RowEncoder.encoderFor(outputSchema, lenient = false))
 
-    dataset.toDF
+    dataset
+      .toDF()
       .mapPartitions { it =>
         new QueryIterator(
           localIndexAddr,

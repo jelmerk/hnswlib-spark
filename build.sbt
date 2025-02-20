@@ -12,6 +12,8 @@ ThisBuild / Test / parallelExecution := false
 
 ThisBuild / dynverSonatypeSnapshots := true
 
+ThisBuild / scalacOptions ++= Seq("-deprecation", "-feature")
+
 ThisBuild / versionScheme := Some("early-semver")
 
 ThisBuild / resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository"
