@@ -50,31 +50,31 @@ def test_hnsw_save_and_load( tmp_path: Path) -> None:
     hnsw.write().overwrite().save(tmp_path.as_posix())
     HnswSimilarity.read().load(tmp_path.as_posix())
 
-# def test_hnsw_save_and_load_model(spark: SparkSession, tmp_path: Path) -> None:
-#
-#     df = spark.createDataFrame([
-#         [1, Vectors.dense([0.2, 0.9])],
-#         [2, Vectors.dense([0.2, 1.0])],
-#         [3, Vectors.dense([0.2, 0.1])],
-#     ], ['row_id', 'features'])
-#
-#     hnsw = HnswSimilarity(
-#         identifierCol='row_id',
-#         featuresCol='features',
-#         distanceFunction='cosine',
-#         m=32,
-#         ef=5,
-#         k=5,
-#         efConstruction=200,
-#         numPartitions=1,
-#         numThreads=1
-#     )
-#
-#     model = hnsw.fit(df)
-#
-#     try:
-#         model.write().overwrite().save(tmp_path.as_posix())
-#     finally:
-#         model.dispose()
-#
-#     HnswSimilarityModel.read().load(tmp_path.as_posix()).dispose()
+def test_hnsw_save_and_load_model(spark: SparkSession, tmp_path: Path) -> None:
+
+    df = spark.createDataFrame([
+        [1, Vectors.dense([0.2, 0.9])],
+        [2, Vectors.dense([0.2, 1.0])],
+        [3, Vectors.dense([0.2, 0.1])],
+    ], ['row_id', 'features'])
+
+    hnsw = HnswSimilarity(
+        identifierCol='row_id',
+        featuresCol='features',
+        distanceFunction='cosine',
+        m=32,
+        ef=5,
+        k=5,
+        efConstruction=200,
+        numPartitions=1,
+        numThreads=1
+    )
+
+    model = hnsw.fit(df)
+
+    try:
+        model.write().overwrite().save(tmp_path.as_posix())
+    finally:
+        model.dispose()
+
+    HnswSimilarityModel.read().load(tmp_path.as_posix()).dispose()

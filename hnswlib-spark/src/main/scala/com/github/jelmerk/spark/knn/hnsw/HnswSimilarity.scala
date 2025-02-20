@@ -53,7 +53,7 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
-      taskGroup: String
+      jobGroup: String
   ): HnswSimilarityModel =
     new HnswSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,
@@ -63,7 +63,7 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       sparkContext,
       indices,
       clientFactory,
-      taskGroup
+      jobGroup
     )
 }
 
@@ -150,7 +150,7 @@ private[knn] class HnswSimilarityModelImpl[
     val sparkContext: SparkContext,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     val clientFactory: IndexClientFactory[TId, TVector, TDistance],
-    val taskGroup: String
+    val jobGroup: String
 )(implicit val idTypeTag: TypeTag[TId], val vectorTypeTag: TypeTag[TVector])
     extends HnswSimilarityModel
     with KnnModelOps[HnswSimilarityModel, TId, TVector, TItem, TDistance, HnswIndex[TId, TVector, TItem, TDistance]] {
@@ -164,7 +164,7 @@ private[knn] class HnswSimilarityModelImpl[
       sparkContext,
       indexAddresses,
       clientFactory,
-      taskGroup
+      jobGroup
     )
     copyValues(copied, extra).setParent(parent)
   }

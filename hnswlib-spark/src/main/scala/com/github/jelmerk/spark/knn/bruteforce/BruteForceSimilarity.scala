@@ -48,7 +48,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
-      taskGroup: String
+      jobGroup: String
   ): BruteForceSimilarityModel =
     new BruteForceSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,
@@ -58,7 +58,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       sparkContext,
       indices,
       clientFactory,
-      taskGroup
+      jobGroup
     )
 }
 
@@ -92,7 +92,7 @@ private[knn] class BruteForceSimilarityModelImpl[
     val sparkContext: SparkContext,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     val clientFactory: IndexClientFactory[TId, TVector, TDistance],
-    val taskGroup: String
+    val jobGroup: String
 )(implicit val idTypeTag: TypeTag[TId], val vectorTypeTag: TypeTag[TVector])
     extends BruteForceSimilarityModel
     with KnnModelOps[
@@ -115,7 +115,7 @@ private[knn] class BruteForceSimilarityModelImpl[
       sparkContext,
       indexAddresses,
       clientFactory,
-      taskGroup
+      jobGroup
     )
     copyValues(copied, extra).setParent(parent)
   }

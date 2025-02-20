@@ -174,8 +174,8 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
     *   map of index servers
     * @param clientFactory
     *   builds index clients
-    * @param taskGroup
-    *   taskgroup that holds the indices
+    * @param jobGroup
+    *   jobGroup that holds the indices
     * @tparam TId
     *   type of the index item identifier
     * @tparam TVector
@@ -200,7 +200,7 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
       sparkContext: SparkContext,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
-      taskGroup: String
+      jobGroup: String
   ): TModel
 }
 
@@ -517,7 +517,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       sc,
       servers,
       clientFactory,
-      metadata.uid
+      jobGroup
     )
 
     val params = metadata.paramMap
@@ -543,6 +543,8 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
 
   private[knn] def sparkContext: SparkContext
 
+  private[knn] def jobGroup: String
+
   @volatile private[knn] var disposed: Boolean = false
 
   /** @group setParam */
@@ -561,7 +563,7 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
 
   /** Disposes of the spark resources associated with this model. Afterwards it can no longer be used */
   override def dispose(): Unit = {
-    sparkContext.cancelJobGroup(uid)
+    sparkContext.cancelJobGroup(jobGroup)
 
     disposed = true
   }
