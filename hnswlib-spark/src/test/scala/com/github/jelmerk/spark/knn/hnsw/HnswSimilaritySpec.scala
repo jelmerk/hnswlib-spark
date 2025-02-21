@@ -195,7 +195,7 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
       withTempFolder { folder =>
         val items = Seq(
           InputRow(1000000, Array(0.0110f, 0.2341f)),
-          InputRow(2000000, Array(0.2300f, 0.3891f)),
+          InputRow(2000000, Array(0.2300f, 0.3891f))
         ).toDF()
 
         val path = new File(folder, "model").getCanonicalPath
@@ -208,7 +208,8 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
           InputRow(3000000, Array(0.4300f, 0.9891f))
         ).toDF()
 
-        val other = hnsw.copy(ParamMap.empty)
+        val other = hnsw
+          .copy(ParamMap.empty)
           .setInitialModelPath(path)
 
         withDisposableResource(other.fit(newItems)) { model =>

@@ -1,20 +1,53 @@
 package com.github.jelmerk.spark
 
 import java.io.{ObjectInput, ObjectOutput}
+
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scala.util.Try
+import scala.util.control.NonFatal
+
 import com.github.jelmerk.knn.Jdk17DistanceFunctions
-import com.github.jelmerk.knn.scalalike.{DistanceFunction, Item, ObjectSerializer, doubleBrayCurtisDistance, doubleCanberraDistance, doubleCorrelationDistance, doubleCosineDistance, doubleEuclideanDistance, doubleInnerProduct, doubleManhattanDistance, floatBrayCurtisDistance, floatCanberraDistance, floatCorrelationDistance, floatCosineDistance, floatEuclideanDistance, floatInnerProduct, floatManhattanDistance}
-import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{vectorFloat128BrayCurtisDistance, vectorFloat128CanberraDistance, vectorFloat128CosineDistance, vectorFloat128EuclideanDistance, vectorFloat128InnerProduct, vectorFloat128ManhattanDistance}
-import com.github.jelmerk.server.index.{DenseVector, DoubleArrayVector, FloatArrayVector, Result, SearchRequest, SparseVector}
+import com.github.jelmerk.knn.scalalike.{
+  doubleBrayCurtisDistance,
+  doubleCanberraDistance,
+  doubleCorrelationDistance,
+  doubleCosineDistance,
+  doubleEuclideanDistance,
+  doubleInnerProduct,
+  doubleManhattanDistance,
+  floatBrayCurtisDistance,
+  floatCanberraDistance,
+  floatCorrelationDistance,
+  floatCosineDistance,
+  floatEuclideanDistance,
+  floatInnerProduct,
+  floatManhattanDistance,
+  DistanceFunction,
+  Item,
+  ObjectSerializer
+}
+import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{
+  vectorFloat128BrayCurtisDistance,
+  vectorFloat128CanberraDistance,
+  vectorFloat128CosineDistance,
+  vectorFloat128EuclideanDistance,
+  vectorFloat128InnerProduct,
+  vectorFloat128ManhattanDistance
+}
+import com.github.jelmerk.server.index.{
+  DenseVector,
+  DoubleArrayVector,
+  FloatArrayVector,
+  Result,
+  SearchRequest,
+  SparseVector
+}
 import com.github.jelmerk.serving.client.IndexClientFactory
 import com.github.jelmerk.serving.server.IndexServerFactory
 import com.github.jelmerk.spark.linalg.functions.VectorDistanceFunctions
-import org.apache.spark.ml.linalg.{Vector, Vectors, DenseVector => SparkDenseVector, SparseVector => SparkSparseVector}
+import org.apache.spark.ml.linalg.{DenseVector => SparkDenseVector, SparseVector => SparkSparseVector, Vector, Vectors}
 import org.apache.spark.sql.Row
-
-import scala.util.control.NonFatal
 
 package object knn {
 

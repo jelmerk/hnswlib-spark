@@ -73,7 +73,7 @@ class VectorConverter(override val uid: String)
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
 
-  //noinspection DuplicatedCode
+  // noinspection DuplicatedCode
   override def transformSchema(schema: StructType): StructType = {
     if (schema.fieldNames.contains(getOutputCol)) {
       throw new IllegalArgumentException(s"Output column $getOutputCol already exists.")
