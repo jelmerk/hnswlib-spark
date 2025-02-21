@@ -498,11 +498,12 @@ package object knn {
     case value           => userDistanceFunction(value)
   }
 
+  @SuppressWarnings(Array("CatchThrowable"))
   private def vectorApiAvailable: Boolean = try {
     val _ = Jdk17DistanceFunctions.VECTOR_FLOAT_128_COSINE_DISTANCE
     true
   } catch {
-    case NonFatal(_) => false
+    case _: Throwable => false
   }
 
   private def userDistanceFunction[TVector, TDistance](name: String): DistanceFunction[TVector, TDistance] =

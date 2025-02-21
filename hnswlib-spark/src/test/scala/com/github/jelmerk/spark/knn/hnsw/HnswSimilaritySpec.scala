@@ -189,7 +189,42 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
 
         }
       }
+    }
 
+    "append to existing model" in {
+      withTempFolder { folder =>
+        val items = Seq(
+          InputRow(1000000, Array(0.0110f, 0.2341f)),
+          InputRow(2000000, Array(0.2300f, 0.3891f)),
+        ).toDF()
+
+        val path = new File(folder, "model").getCanonicalPath
+
+        withDisposableResource(hnsw.fit(items)) { model =>
+          model.write.overwrite().save(path)
+        }
+
+        val newItems = Seq(
+          InputRow(3000000, Array(0.4300f, 0.9891f))
+        ).toDF()
+
+        val other = hnsw.copy(ParamMap.empty)
+          .setInitialModelPath(path)
+
+        withDisposableResource(other.fit(newItems)) { model =>
+          val query = InputRow(1000000, Array(0.0110f, 0.2341f))
+
+          val queryItems = Seq(query).toDF()
+
+          val result = model.transform(queryItems).as[OutputRow[Int, Array[Float], Float]].head()
+
+          result.id should be(query.id)
+          result.vector should be(query.vector)
+          result.neighbors should be(
+            Seq(Neighbor(1000000, 0.0f), Neighbor(3000000, 0.06521261f), Neighbor(2000000, 0.11621308f))
+          )
+        }
+      }
     }
   }
 
