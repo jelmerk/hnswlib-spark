@@ -1,52 +1,20 @@
 package com.github.jelmerk.spark
 
 import java.io.{ObjectInput, ObjectOutput}
-
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scala.util.Try
-
 import com.github.jelmerk.knn.Jdk17DistanceFunctions
-import com.github.jelmerk.knn.scalalike.{
-  doubleBrayCurtisDistance,
-  doubleCanberraDistance,
-  doubleCorrelationDistance,
-  doubleCosineDistance,
-  doubleEuclideanDistance,
-  doubleInnerProduct,
-  doubleManhattanDistance,
-  floatBrayCurtisDistance,
-  floatCanberraDistance,
-  floatCorrelationDistance,
-  floatCosineDistance,
-  floatEuclideanDistance,
-  floatInnerProduct,
-  floatManhattanDistance,
-  DistanceFunction,
-  Item,
-  ObjectSerializer
-}
-import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{
-  vectorFloat128BrayCurtisDistance,
-  vectorFloat128CanberraDistance,
-  vectorFloat128CosineDistance,
-  vectorFloat128EuclideanDistance,
-  vectorFloat128InnerProduct,
-  vectorFloat128ManhattanDistance
-}
-import com.github.jelmerk.server.index.{
-  DenseVector,
-  DoubleArrayVector,
-  FloatArrayVector,
-  Result,
-  SearchRequest,
-  SparseVector
-}
+import com.github.jelmerk.knn.scalalike.{DistanceFunction, Item, ObjectSerializer, doubleBrayCurtisDistance, doubleCanberraDistance, doubleCorrelationDistance, doubleCosineDistance, doubleEuclideanDistance, doubleInnerProduct, doubleManhattanDistance, floatBrayCurtisDistance, floatCanberraDistance, floatCorrelationDistance, floatCosineDistance, floatEuclideanDistance, floatInnerProduct, floatManhattanDistance}
+import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{vectorFloat128BrayCurtisDistance, vectorFloat128CanberraDistance, vectorFloat128CosineDistance, vectorFloat128EuclideanDistance, vectorFloat128InnerProduct, vectorFloat128ManhattanDistance}
+import com.github.jelmerk.server.index.{DenseVector, DoubleArrayVector, FloatArrayVector, Result, SearchRequest, SparseVector}
 import com.github.jelmerk.serving.client.IndexClientFactory
 import com.github.jelmerk.serving.server.IndexServerFactory
 import com.github.jelmerk.spark.linalg.functions.VectorDistanceFunctions
-import org.apache.spark.ml.linalg.{DenseVector => SparkDenseVector, SparseVector => SparkSparseVector, Vector, Vectors}
+import org.apache.spark.ml.linalg.{Vector, Vectors, DenseVector => SparkDenseVector, SparseVector => SparkSparseVector}
 import org.apache.spark.sql.Row
+
+import scala.util.control.NonFatal
 
 package object knn {
 
@@ -60,41 +28,44 @@ package object knn {
     case _                                => "unknown"
   }
 
-  private[knn] case class IntDoubleArrayIndexItem(id: Int, vector: Array[Double]) extends Item[Int, Array[Double]] {
+  final private[knn] case class IntDoubleArrayIndexItem(id: Int, vector: Array[Double])
+      extends Item[Int, Array[Double]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class LongDoubleArrayIndexItem(id: Long, vector: Array[Double]) extends Item[Long, Array[Double]] {
+  final private[knn] case class LongDoubleArrayIndexItem(id: Long, vector: Array[Double])
+      extends Item[Long, Array[Double]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class StringDoubleArrayIndexItem(id: String, vector: Array[Double])
+  final private[knn] case class StringDoubleArrayIndexItem(id: String, vector: Array[Double])
       extends Item[String, Array[Double]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class IntFloatArrayIndexItem(id: Int, vector: Array[Float]) extends Item[Int, Array[Float]] {
+  final private[knn] case class IntFloatArrayIndexItem(id: Int, vector: Array[Float]) extends Item[Int, Array[Float]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class LongFloatArrayIndexItem(id: Long, vector: Array[Float]) extends Item[Long, Array[Float]] {
+  final private[knn] case class LongFloatArrayIndexItem(id: Long, vector: Array[Float])
+      extends Item[Long, Array[Float]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class StringFloatArrayIndexItem(id: String, vector: Array[Float])
+  final private[knn] case class StringFloatArrayIndexItem(id: String, vector: Array[Float])
       extends Item[String, Array[Float]] {
     override def dimensions: Int = vector.length
   }
 
-  private[knn] case class IntVectorIndexItem(id: Int, vector: Vector) extends Item[Int, Vector] {
+  final private[knn] case class IntVectorIndexItem(id: Int, vector: Vector) extends Item[Int, Vector] {
     override def dimensions: Int = vector.size
   }
 
-  private[knn] case class LongVectorIndexItem(id: Long, vector: Vector) extends Item[Long, Vector] {
+  final private[knn] case class LongVectorIndexItem(id: Long, vector: Vector) extends Item[Long, Vector] {
     override def dimensions: Int = vector.size
   }
 
-  private[knn] case class StringVectorIndexItem(id: String, vector: Vector) extends Item[String, Vector] {
+  final private[knn] case class StringVectorIndexItem(id: String, vector: Vector) extends Item[String, Vector] {
     override def dimensions: Int = vector.size
   }
 
@@ -531,7 +502,7 @@ package object knn {
     val _ = Jdk17DistanceFunctions.VECTOR_FLOAT_128_COSINE_DISTANCE
     true
   } catch {
-    case _: Throwable => false
+    case NonFatal(_) => false
   }
 
   private def userDistanceFunction[TVector, TDistance](name: String): DistanceFunction[TVector, TDistance] =

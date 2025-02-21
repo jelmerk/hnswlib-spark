@@ -18,6 +18,8 @@ ThisBuild / versionScheme := Some("early-semver")
 
 ThisBuild / resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository"
 
+ThisBuild / scapegoatIgnoredFiles := Seq(".*/src_managed/.*")
+
 lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
 

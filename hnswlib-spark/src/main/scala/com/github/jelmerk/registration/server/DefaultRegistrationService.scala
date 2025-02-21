@@ -26,4 +26,4 @@ class DefaultRegistrationService(val registrationLatch: CountDownLatch) extends 
 
 }
 
-case class PartitionAndReplica(partitionNum: Int, replicaNum: Int)
+final case class PartitionAndReplica(partitionNum: Int, replicaNum: Int)

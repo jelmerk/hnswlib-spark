@@ -1,13 +1,13 @@
 package com.github.jelmerk.spark.knn
 
 import java.net.InetSocketAddress
-
 import scala.util.Try
-
 import com.github.jelmerk.registration.server.PartitionAndReplica
 import com.github.jelmerk.serving.client.IndexClientFactory
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
+
+import scala.util.control.NonFatal
 
 private[knn] class QueryIterator[TId, TVector, TDistance](
     indices: Map[PartitionAndReplica, InetSocketAddress],
@@ -45,7 +45,7 @@ private[knn] class QueryIterator[TId, TVector, TDistance](
       }
       result
     } catch {
-      case t: Throwable =>
+      case NonFatal(t) =>
         Try(client.shutdown())
         failed = true
         throw t

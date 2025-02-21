@@ -10,9 +10,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, IntegerType, LongType, StringType, StructField, StructType}
 
 /** Companion class for KnnSimilarityEvaluator. */
-object KnnSimilarityEvaluator extends DefaultParamsReadable[KnnSimilarityEvaluator] {
-  override def load(path: String): KnnSimilarityEvaluator = super.load(path)
-}
+object KnnSimilarityEvaluator extends DefaultParamsReadable[KnnSimilarityEvaluator]
 
 /** Evaluator for knn algorithms, which expects two input columns, the exact neighbors and approximate neighbors. It
   * compares the results to determine the accuracy of the approximate results. Typically you will want to compute this
@@ -21,6 +19,7 @@ object KnnSimilarityEvaluator extends DefaultParamsReadable[KnnSimilarityEvaluat
   * @param uid
   *   identifier
   */
+@SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
 class KnnSimilarityEvaluator(override val uid: String) extends Evaluator with DefaultParamsWritable {
 
   def this() = this(Identifiable.randomUID("knn_eval"))

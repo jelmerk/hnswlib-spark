@@ -38,7 +38,7 @@ import org.apache.spark.sql.types._
 import org.json4s._
 import org.json4s.jackson.Serialization.{read, write}
 
-private[knn] case class ModelMetaData(
+private[knn] final case class ModelMetaData(
     `class`: String,
     timestamp: Long,
     sparkVersion: String,
@@ -51,7 +51,7 @@ private[knn] case class ModelMetaData(
     paramMap: ModelParameters
 )
 
-private case class ModelParameters(
+final private case class ModelParameters(
     featuresCol: String,
     predictionCol: String,
     k: Int,
@@ -187,6 +187,7 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
     * @return
     *   model
     */
+  @SuppressWarnings(Array("MaxParameters"))
   protected def createModel[
       TId: TypeTag,
       TVector: TypeTag,
@@ -205,6 +206,7 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
 }
 
 /** Common params for KnnAlgorithm and KnnModel. */
+@SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
 private[knn] trait KnnModelParams extends Params with HasFeaturesCol with HasPredictionCol {
 
   /** Param for the column name for the query partitions.
@@ -470,6 +472,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
     }
   }
 
+  @SuppressWarnings(Array("MaxParameters"))
   private def typedLoad[
       TId: TypeTag: ClassTag,
       TVector: TypeTag: ClassTag,
@@ -561,16 +564,13 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
 
   def isDisposed: Boolean = disposed
 
-  /** Disposes of the spark resources associated with this model. Afterwards it can no longer be used */
+  /** Disposes of the spark resources associated with this model. Afterward it can no longer be used */
   override def dispose(): Unit = {
     sparkContext.cancelJobGroup(jobGroup)
 
     disposed = true
   }
 
-  override def finalize(): Unit = {
-    dispose()
-  }
 }
 
 /** Contains the core knn search logic
@@ -656,6 +656,7 @@ private[knn] object KnnAlgorithm {
   private implicit val format: Formats = DefaultFormats.withLong
 }
 
+@SuppressWarnings(Array("MaxParameters", "CollectionIndexOnNonIndexedSeq"))
 private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](override val uid: String)
     extends Estimator[TModel]
     with ModelLogging
@@ -722,9 +723,9 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       case (StringType, VectorType) => typedFit[String, Vector, StringVectorIndexItem, Double](dataset)
       case _ =>
         throw new IllegalArgumentException(
-          s"Cannot create index for items with identifier of type " +
+          "Cannot create index for items with identifier of type " +
             s"${identifierType.simpleString} and vector of type ${vectorType.simpleString}. " +
-            s"Supported identifiers are string, int, long and string. Supported vectors are array<float>, array<double> and vector "
+            "Supported identifiers are string, int, long and string. Supported vectors are array<float>, array<double> and vector "
         )
     }
 
@@ -734,6 +735,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
   override def transformSchema(schema: StructType): StructType =
     validateAndTransformSchema(schema, schema(getIdentifierCol).dataType)
 
+  @SuppressWarnings(Array("MaxParameters"))
   private def typedFit[
       TId: TypeTag: ClassTag,
       TVector: TypeTag: ClassTag,
@@ -927,7 +929,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     * @param uid
     *   identifier
     * @param jobGroup
-    *   Job group of the job that holds on the the indices being served
+    *   Job group of the job that holds on the indices being served
     * @param indexRdd
     *   The indices
     * @param numReplicas
@@ -1007,7 +1009,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
             logInfo(
               partitionNum,
               replicaNum,
-              s"Task canceled"
+              "Task canceled"
             )
           } finally {
             server.shutdown()

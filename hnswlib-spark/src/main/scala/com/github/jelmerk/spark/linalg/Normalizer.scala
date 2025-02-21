@@ -14,15 +14,14 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 /** Companion class for Normalizer. */
-object Normalizer extends DefaultParamsReadable[Normalizer] {
-  override def load(path: String): Normalizer = super.load(path)
-}
+object Normalizer extends DefaultParamsReadable[Normalizer]
 
 /** Normalizes vectors to unit norm.
   *
   * @param uid
   *   identifier
   */
+@SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
 class Normalizer(override val uid: String)
     extends Transformer
     with HasInputCol
@@ -46,6 +45,7 @@ class Normalizer(override val uid: String)
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
 
+  //noinspection DuplicatedCode
   override def transformSchema(schema: StructType): StructType = {
     if (schema.fieldNames.contains(getOutputCol)) {
       throw new IllegalArgumentException(s"Output column $getOutputCol already exists.")

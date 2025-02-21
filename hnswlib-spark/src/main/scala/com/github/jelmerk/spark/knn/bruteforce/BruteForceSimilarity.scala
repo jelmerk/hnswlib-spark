@@ -35,6 +35,7 @@ private[bruteforce] trait BruteForceIndexLoader extends IndexLoader with BruteFo
 }
 
 private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForceSimilarityModel] {
+  @SuppressWarnings(Array("MaxParameters"))
   protected def createModel[
       TId: TypeTag,
       TVector: TypeTag,

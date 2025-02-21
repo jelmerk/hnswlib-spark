@@ -40,6 +40,7 @@ private[hnsw] trait HnswIndexLoader extends IndexLoader with HnswIndexType {
 }
 
 private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
+  @SuppressWarnings(Array("MaxParameters"))
   protected def createModel[
       TId: TypeTag,
       TVector: TypeTag,

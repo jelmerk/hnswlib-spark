@@ -19,7 +19,7 @@ object SparseVectorDistanceFunctions {
     val denom = norm(u) * norm(v)
     val dot   = innerProduct(u, v)
 
-    if (denom == 0.0) 1d
+    if (denom < 1e-10) 1d
     else 1 - dot / denom
   }
 

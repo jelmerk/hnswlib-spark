@@ -13,9 +13,7 @@ import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types.{ArrayType, DataType, DoubleType, FloatType, StructType}
 
 /** Companion class for VectorConverter. */
-object VectorConverter extends DefaultParamsReadable[VectorConverter] {
-  override def load(path: String): VectorConverter = super.load(path)
-}
+object VectorConverter extends DefaultParamsReadable[VectorConverter]
 
 private[conversion] trait VectorConverterParams extends HasInputCol with HasOutputCol {
 
@@ -36,6 +34,7 @@ private[conversion] trait VectorConverterParams extends HasInputCol with HasOutp
   * @param uid
   *   identifier
   */
+@SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
 class VectorConverter(override val uid: String)
     extends Transformer
     with VectorConverterParams
@@ -74,6 +73,7 @@ class VectorConverter(override val uid: String)
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
 
+  //noinspection DuplicatedCode
   override def transformSchema(schema: StructType): StructType = {
     if (schema.fieldNames.contains(getOutputCol)) {
       throw new IllegalArgumentException(s"Output column $getOutputCol already exists.")
