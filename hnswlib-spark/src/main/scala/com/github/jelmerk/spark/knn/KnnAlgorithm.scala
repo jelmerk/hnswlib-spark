@@ -506,7 +506,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       }
       .withResources(profile)
 
-    val jobGroup = metadata.uid + "_" + System.currentTimeMillis()
+    val jobGroup = metadata.uid + "_" + System.nanoTime()
     val servers  = serve(metadata.uid, jobGroup, indexRdd, metadata.numReplicas)
 
     val model = createModel(

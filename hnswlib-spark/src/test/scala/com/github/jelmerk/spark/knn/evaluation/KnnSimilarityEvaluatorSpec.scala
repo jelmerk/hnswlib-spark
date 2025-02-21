@@ -23,7 +23,7 @@ class KnnSimilarityEvaluatorSpec extends AnyWordSpec with SharedSparkContext {
       val df = Seq(
         Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)) -> Seq(Neighbor("1", 0.1f), Neighbor("2", 0.2f)),
         Seq(Neighbor("3", 0.1f))                      -> Seq(Neighbor("3", 0.1f), Neighbor("4", 0.9f))
-      ).toDF("approximate", "exact")
+      ) toDF ("approximate", "exact")
 
       evaluator.evaluate(df) should be(0.75)
     }
@@ -31,7 +31,7 @@ class KnnSimilarityEvaluatorSpec extends AnyWordSpec with SharedSparkContext {
     "evaluate performance for no results as 1" in {
       val df = Seq(
         Seq.empty[Neighbor[Int, Float]] -> Seq.empty[Neighbor[Int, Float]]
-      ).toDF("approximate", "exact")
+      ) toDF ("approximate", "exact")
 
       evaluator.evaluate(df) should be(1)
     }
