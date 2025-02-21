@@ -19,7 +19,6 @@ trait SharedSparkContext extends BeforeAndAfterAll {
       .set("spark.ui.enabled", "false")
       .set("spark.app.id", appID)
       .set("spark.driver.host", "localhost")
-      .set("spark.cleaner.referenceTracking.cleanCheckpoints", "false")
   }
 
   lazy val spark: SparkSession = internalSparkSession

@@ -12,6 +12,8 @@ def spark(request):
 
     sc = SparkSession.builder \
         .config("spark.driver.extraClassPath", os.environ["ARTIFACT_PATH"]) \
+        .config("spark.ui.enabled", "false") \
+        .config("spark.driver.host", "localhost") \
         .master("local[*]") \
         .getOrCreate()
 
