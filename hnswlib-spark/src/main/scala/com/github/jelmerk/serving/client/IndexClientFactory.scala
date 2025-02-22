@@ -16,8 +16,6 @@ import com.github.jelmerk.server.index._
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.StructType
 
 class IndexClient[TId, TVector, TDistance](
     indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
@@ -54,7 +52,6 @@ class IndexClient[TId, TVector, TDistance](
       vectorColumn: String,
       queryPartitionsColumn: Option[String],
       batch: Seq[Row],
-      outputSchema: StructType,
       k: Int
   ): Iterator[Row] = {
 
@@ -99,7 +96,7 @@ class IndexClient[TId, TVector, TDistance](
 
     val expectations = batch.zip(queries).map { case (row, (partitions, _)) => partitions -> row }.iterator
 
-    new ResultsIterator(expectations, responseIterators: Array[Iterator[SearchResponse]], outputSchema, k)
+    new ResultsIterator(expectations, responseIterators: Array[Iterator[SearchResponse]], k)
   }
 
   def saveIndex(path: String): Unit = {
@@ -156,7 +153,6 @@ class IndexClient[TId, TVector, TDistance](
   private class ResultsIterator(
       iterator: Iterator[(Seq[Int], Row)],
       partitionIterators: Array[Iterator[SearchResponse]],
-      outputSchema: StructType,
       k: Int
   ) extends Iterator[Row] {
 
@@ -186,7 +182,7 @@ class IndexClient[TId, TVector, TDistance](
       }
       values.update(i, results)
 
-      new GenericRowWithSchema(values, outputSchema)
+      Row.fromSeq(values)
     }
   }
 

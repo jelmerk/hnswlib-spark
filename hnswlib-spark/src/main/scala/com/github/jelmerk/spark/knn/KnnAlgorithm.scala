@@ -32,7 +32,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.json4s._
@@ -619,6 +618,7 @@ private[knn] trait KnnModelOps[
       throw new IllegalStateException("Model is disposed.")
     }
 
+    val spark              = dataset.sparkSession
     val localIndexAddr     = indexAddresses
     val localClientFactory = clientFactory
     val k                  = getK
@@ -627,22 +627,19 @@ private[knn] trait KnnModelOps[
 
     val outputSchema = transformSchema(dataset.schema)
 
-    implicit val encoder: Encoder[Row] = ExpressionEncoder(RowEncoder.encoderFor(outputSchema, lenient = false))
-
-    dataset
-      .toDF()
+    val rowRdd = dataset.toDF.rdd
       .mapPartitions { it =>
         new QueryIterator(
           localIndexAddr,
           localClientFactory,
           it,
-          outputSchema,
           batchSize = 1000,
           k,
           featuresCol,
           partitionsColOpt
         )
       }
+    spark.createDataFrame(rowRdd, outputSchema)
   }
 
   override def transformSchema(schema: StructType): StructType = {

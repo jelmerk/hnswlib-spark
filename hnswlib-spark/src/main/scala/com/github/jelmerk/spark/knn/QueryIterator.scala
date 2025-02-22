@@ -14,7 +14,6 @@ private[knn] class QueryIterator[TId, TVector, TDistance](
     indices: Map[PartitionAndReplica, InetSocketAddress],
     indexClientFactory: IndexClientFactory[TId, TVector, TDistance],
     records: Iterator[Row],
-    outputSchema: StructType,
     batchSize: Int,
     k: Int,
     vectorCol: String,
@@ -29,7 +28,7 @@ private[knn] class QueryIterator[TId, TVector, TDistance](
     else
       records
         .grouped(batchSize)
-        .map(batch => client.search(vectorCol, partitionsCol, batch, outputSchema, k))
+        .map(batch => client.search(vectorCol, partitionsCol, batch, k))
         .reduce((a, b) => a ++ b)
 
   override def hasNext: Boolean = delegate.hasNext
