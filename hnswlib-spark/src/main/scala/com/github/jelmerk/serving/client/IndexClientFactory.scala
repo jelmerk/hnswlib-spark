@@ -4,11 +4,10 @@ import java.net.InetSocketAddress
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
-import scala.collection.{mutable, Seq}
+import scala.collection.Seq
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.language.implicitConversions
 import scala.util.Random
 
 import com.github.jelmerk.registration.server.PartitionAndReplica
@@ -174,7 +173,7 @@ class IndexClient[TId, TVector, TDistance](
         .map { case (id, distance) => Row(id, distance) }
 
       val n      = row.length
-      val values = new mutable.ArraySeq[Any](n + 1)
+      val values = Array.ofDim[Any](n + 1)
       var i      = 0
       while (i < n) {
         values.update(i, row.get(i))
@@ -182,7 +181,7 @@ class IndexClient[TId, TVector, TDistance](
       }
       values.update(i, results)
 
-      Row.fromSeq(values)
+      Row.fromSeq(values.toIndexedSeq)
     }
   }
 

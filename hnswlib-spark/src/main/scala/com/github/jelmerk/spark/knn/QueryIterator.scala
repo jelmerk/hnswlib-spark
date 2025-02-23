@@ -8,7 +8,6 @@ import scala.util.control.NonFatal
 import com.github.jelmerk.registration.server.PartitionAndReplica
 import com.github.jelmerk.serving.client.IndexClientFactory
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.StructType
 
 private[knn] class QueryIterator[TId, TVector, TDistance](
     indices: Map[PartitionAndReplica, InetSocketAddress],

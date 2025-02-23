@@ -1,7 +1,6 @@
 package com.github.jelmerk.serving.server
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.implicitConversions
 
 import com.github.jelmerk.knn.scalalike.{Index, Item}
 import com.github.jelmerk.server.index._
