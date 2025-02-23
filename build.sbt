@@ -4,7 +4,7 @@ import scalapb.compiler.Version.grpcJavaVersion
 
 ThisBuild / organization := "com.github.jelmerk"
 ThisBuild / scalaVersion := "2.12.18"
-//ThisBuild / scalaVersion := "2.13.10"
+//ThisBuild / scalaVersion := "2.13.16"
 
 ThisBuild / fork := true
 
@@ -12,7 +12,15 @@ ThisBuild / Test / parallelExecution := false
 
 ThisBuild / dynverSonatypeSnapshots := true
 
-ThisBuild / scalacOptions ++= Seq("-deprecation", "-feature")
+ThisBuild / scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+//  "-Xfatal-warnings",
+  "-Wconf:msg=higherKinds.*:silent",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-unused"
+)
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -71,7 +79,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    crossScalaVersions := Seq("2.12.18", "2.13.10"),
+    crossScalaVersions := Seq("2.12.18", "2.13.16"),
     autoScalaLibrary := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {

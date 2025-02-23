@@ -57,9 +57,9 @@ class KnnSimilarityEvaluator(override val uid: String) extends Evaluator with De
     *   the accuracy of the approximate results
     */
   override def evaluate(dataset: Dataset[_]): Double = {
-    if (!dataset.schema.fieldNames.contains(getExactNeighborsCol))
+    if (!dataset.columns.contains(getExactNeighborsCol))
       throw new IllegalArgumentException(s"Column $getExactNeighborsCol does not exist.")
-    if (!dataset.schema.fieldNames.contains(getApproximateNeighborsCol))
+    if (!dataset.columns.contains(getApproximateNeighborsCol))
       throw new IllegalArgumentException(s"Column $getApproximateNeighborsCol does not exist.")
 
     (dataset.schema(getExactNeighborsCol).dataType, dataset.schema(getApproximateNeighborsCol).dataType) match {

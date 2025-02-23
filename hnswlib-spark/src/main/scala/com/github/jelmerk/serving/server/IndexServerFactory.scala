@@ -1,6 +1,6 @@
 package com.github.jelmerk.serving.server
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.InetSocketAddress
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
 import scala.concurrent.ExecutionContext

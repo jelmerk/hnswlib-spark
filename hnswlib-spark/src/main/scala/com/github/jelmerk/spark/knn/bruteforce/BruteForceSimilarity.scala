@@ -105,8 +105,6 @@ private[knn] class BruteForceSimilarityModelImpl[
       BruteForceIndex[TId, TVector, TItem, TDistance]
     ] {
 
-//  override implicit protected def idTypeTag: TypeTag[TId] = typeTag[TId]
-
   override def copy(extra: ParamMap): BruteForceSimilarityModel = {
     val copied = new BruteForceSimilarityModelImpl[TId, TVector, TItem, TDistance](
       uid,

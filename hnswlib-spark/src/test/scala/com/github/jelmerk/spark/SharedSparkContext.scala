@@ -31,6 +31,7 @@ trait SharedSparkContext extends BeforeAndAfterAll {
 
   override def afterAll(): Unit = {
     try {
+      Thread.sleep(1000) // hack to avoid tons of exceptions during build
       Option(internalSparkSession).foreach { _.stop() }
       // To avoid Akka rebinding to the same port, since it doesn't
       // unbind immediately on shutdown.

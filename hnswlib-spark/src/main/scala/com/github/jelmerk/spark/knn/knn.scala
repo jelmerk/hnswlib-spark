@@ -5,7 +5,6 @@ import java.io.{ObjectInput, ObjectOutput}
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scala.util.Try
-import scala.util.control.NonFatal
 
 import com.github.jelmerk.knn.Jdk17DistanceFunctions
 import com.github.jelmerk.knn.scalalike.{

@@ -117,12 +117,10 @@ private[hnsw] trait HnswParams extends KnnAlgorithmParams with HnswModelParams {
   setDefault(m -> 16, efConstruction -> 200, ef -> 10)
 }
 
-/** Common params for Hnsw and HnswModel.
-  */
+/** Common params for Hnsw and HnswModel. */
 private[hnsw] trait HnswModelParams extends KnnModelParams
 
-/** Companion class for HnswSimilarityModel.
-  */
+/** Companion class for HnswSimilarityModel. */
 object HnswSimilarityModel extends MLReadable[HnswSimilarityModel] {
 
   private[hnsw] class HnswModelReader
@@ -134,8 +132,7 @@ object HnswSimilarityModel extends MLReadable[HnswSimilarityModel] {
 
 }
 
-/** Model produced by `HnswSimilarity`.
-  */
+/** Model produced by `HnswSimilarity`. */
 abstract class HnswSimilarityModel extends KnnModelBase[HnswSimilarityModel] with HnswModelParams with MLWritable
 
 private[knn] class HnswSimilarityModelImpl[

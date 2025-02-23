@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.higherKinds
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Failure
@@ -29,7 +29,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasFeaturesCol, HasPredictionCol}
 import org.apache.spark.ml.util.{DefaultParamsWritable, MLReader, MLWriter}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.resource.{ExecutorResourceRequests, ResourceProfileBuilder, TaskResourceRequests}
+import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions._
@@ -509,7 +509,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       .withResources(profile)
 
     val jobGroup = metadata.uid + "_" + System.nanoTime()
-    val servers  = serve(metadata.uid, jobGroup, indexRdd, metadata.numReplicas)
+    val servers  = serve(jobGroup, indexRdd, metadata.numReplicas)
 
     val model = createModel(
       metadata.uid,
@@ -829,7 +829,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
 
     val jobGroup = uid + "_" + System.nanoTime()
 
-    val registrations = serve[TId, TVector, TItem, TDistance](uid, jobGroup, indexRdd, getNumReplicas)
+    val registrations = serve[TId, TVector, TItem, TDistance](jobGroup, indexRdd, getNumReplicas)
 
     logInfo("All index replicas have successfully registered.")
 
@@ -944,7 +944,6 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
       TItem <: Item[TId, TVector] with Product: ClassTag,
       TDistance: ClassTag
   ](
-      uid: String,
       jobGroup: String,
       indexRdd: RDD[TIndex[TId, TVector, TItem, TDistance]],
       numReplicas: Int
