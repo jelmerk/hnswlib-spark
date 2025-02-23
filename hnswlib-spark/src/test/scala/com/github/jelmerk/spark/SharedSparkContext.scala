@@ -12,14 +12,15 @@ trait SharedSparkContext extends BeforeAndAfterAll {
 
   def appID: String = this.getClass.getName + math.floor(math.random() * 10e4).toLong.toString
 
-  def conf: SparkConf = {
+  def conf: SparkConf =
     new SparkConf()
       .setMaster("local[*]")
       .setAppName("test")
       .set("spark.ui.enabled", "false")
       .set("spark.app.id", appID)
       .set("spark.driver.host", "localhost")
-  }
+      .set("spark.barrier.sync.timeout", "10")
+      .set("spark.stage.maxConsecutiveAttempts", "1")
 
   lazy val spark: SparkSession = internalSparkSession
 

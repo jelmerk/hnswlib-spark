@@ -4,7 +4,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
-import scala.collection.Seq
+import scala.collection.{mutable, Seq}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -174,7 +174,7 @@ class IndexClient[TId, TVector, TDistance](
         .map { case (id, distance) => Row(id, distance) }
 
       val n      = row.length
-      val values = new Array[Any](n + 1)
+      val values = new mutable.ArraySeq[Any](n + 1)
       var i      = 0
       while (i < n) {
         values.update(i, row.get(i))

@@ -29,7 +29,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasFeaturesCol, HasPredictionCol}
 import org.apache.spark.ml.util.{DefaultParamsWritable, MLReader, MLWriter}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.resource.{ResourceProfileBuilder, TaskResourceRequests}
+import org.apache.spark.resource.{ExecutorResourceRequests, ResourceProfileBuilder, TaskResourceRequests}
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.functions._
@@ -627,7 +627,9 @@ private[knn] trait KnnModelOps[
 
     val outputSchema = transformSchema(dataset.schema)
 
-    val rowRdd = dataset.toDF.rdd
+    val rowRdd = dataset
+      .toDF()
+      .rdd
       .mapPartitions { it =>
         new QueryIterator(
           localIndexAddr,
