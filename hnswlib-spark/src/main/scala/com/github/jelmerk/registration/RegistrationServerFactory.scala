@@ -1,4 +1,4 @@
-package com.github.jelmerk.registration.server
+package com.github.jelmerk.registration
 
 import java.net.InetSocketAddress
 import java.util.concurrent.{CountDownLatch, Executors}
@@ -7,7 +7,6 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-import com.github.jelmerk.server.registration.RegistrationServiceGrpc
 import io.grpc.netty.NettyServerBuilder
 
 class RegistrationServer(host: String, numPartitions: Int, numReplicas: Int) {

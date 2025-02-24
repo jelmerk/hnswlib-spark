@@ -1,11 +1,10 @@
-package com.github.jelmerk.registration.client
+package com.github.jelmerk.registration
 
 import java.net.{InetSocketAddress, SocketAddress}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import com.github.jelmerk.server.registration.{RegisterRequest, RegisterResponse, RegistrationServiceGrpc}
 import io.grpc.netty.NettyChannelBuilder
 
 object RegistrationClient {

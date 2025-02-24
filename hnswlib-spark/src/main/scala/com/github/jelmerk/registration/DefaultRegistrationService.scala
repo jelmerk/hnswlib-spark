@@ -1,12 +1,11 @@
-package com.github.jelmerk.registration.server
+package com.github.jelmerk.registration
 
 import java.net.InetSocketAddress
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch}
 
 import scala.concurrent.Future
 
-import com.github.jelmerk.server.registration.{RegisterRequest, RegisterResponse}
-import com.github.jelmerk.server.registration.RegistrationServiceGrpc.RegistrationService
+import com.github.jelmerk.registration.RegistrationServiceGrpc.RegistrationService
 
 class DefaultRegistrationService(val registrationLatch: CountDownLatch) extends RegistrationService {
 

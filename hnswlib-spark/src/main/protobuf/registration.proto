@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package com.github.jelmerk.server;
+package com.github.jelmerk;
 
 service RegistrationService {
   rpc Register (RegisterRequest) returns ( RegisterResponse) {}

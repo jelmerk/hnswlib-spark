@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "scalapb/scalapb.proto";
 
-package com.github.jelmerk.server;
+package com.github.jelmerk;
 
 service IndexService {
   rpc Search (stream SearchRequest) returns (stream SearchResponse) {}

@@ -1,10 +1,9 @@
-package com.github.jelmerk.serving.server
+package com.github.jelmerk.index
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import com.github.jelmerk.index.IndexServiceGrpc.IndexService
 import com.github.jelmerk.knn.scalalike.{Index, Item}
-import com.github.jelmerk.server.index._
-import com.github.jelmerk.server.index.IndexServiceGrpc.IndexService
 import io.grpc.stub.StreamObserver
 import org.apache.commons.io.output.CountingOutputStream
 import org.apache.hadoop.conf.Configuration

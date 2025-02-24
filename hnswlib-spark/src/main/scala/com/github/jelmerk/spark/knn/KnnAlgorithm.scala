@@ -12,12 +12,12 @@ import scala.reflect.runtime.universe._
 import scala.util.Failure
 
 import com.github.jelmerk.Disposable
+import com.github.jelmerk.index.IndexClientFactory
+import com.github.jelmerk.index.IndexServerFactory
 import com.github.jelmerk.knn.ObjectSerializer
 import com.github.jelmerk.knn.scalalike._
-import com.github.jelmerk.registration.client.RegistrationClient
-import com.github.jelmerk.registration.server.{PartitionAndReplica, RegistrationServerFactory}
-import com.github.jelmerk.serving.client.IndexClientFactory
-import com.github.jelmerk.serving.server.IndexServerFactory
+import com.github.jelmerk.registration.{PartitionAndReplica, RegistrationServerFactory}
+import com.github.jelmerk.registration.RegistrationClient
 import com.github.jelmerk.spark.util.SerializableConfiguration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.{Partitioner, SparkContext, SparkEnv, TaskContext}

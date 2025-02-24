@@ -93,6 +93,8 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "python",
     Test / envVars += "SPARK_TESTING" -> "1",
     Compile / doc / scalacOptions ++= Seq(
+      // it's not easy to make generated proto code protected so just exclude it
+      "-skip-packages", "com.github.jelmerk.index:com.github.jelmerk.registration",
       "-doc-footer", s"Hnswlib spark v.${version.value}"
     ),
     apiMappings ++= {

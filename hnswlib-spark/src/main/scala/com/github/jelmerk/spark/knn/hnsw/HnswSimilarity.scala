@@ -6,11 +6,11 @@ import java.net.InetSocketAddress
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
+import com.github.jelmerk.index.IndexClientFactory
 import com.github.jelmerk.knn
 import com.github.jelmerk.knn.scalalike.{DistanceFunction, Item}
 import com.github.jelmerk.knn.scalalike.hnsw._
-import com.github.jelmerk.registration.server.PartitionAndReplica
-import com.github.jelmerk.serving.client.IndexClientFactory
+import com.github.jelmerk.registration.PartitionAndReplica
 import com.github.jelmerk.spark.knn._
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.param._

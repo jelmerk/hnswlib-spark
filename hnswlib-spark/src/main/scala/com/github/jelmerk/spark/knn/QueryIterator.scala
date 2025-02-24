@@ -5,8 +5,8 @@ import java.net.InetSocketAddress
 import scala.util.Try
 import scala.util.control.NonFatal
 
-import com.github.jelmerk.registration.server.PartitionAndReplica
-import com.github.jelmerk.serving.client.IndexClientFactory
+import com.github.jelmerk.index.IndexClientFactory
+import com.github.jelmerk.registration.PartitionAndReplica
 import org.apache.spark.sql.Row
 
 private[knn] class QueryIterator[TId, TVector, TDistance](

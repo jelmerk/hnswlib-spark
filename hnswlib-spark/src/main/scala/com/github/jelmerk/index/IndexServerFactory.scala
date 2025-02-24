@@ -1,4 +1,4 @@
-package com.github.jelmerk.serving.server
+package com.github.jelmerk.index
 
 import java.net.InetSocketAddress
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
@@ -7,7 +7,6 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 import com.github.jelmerk.knn.scalalike.{Index, Item}
-import com.github.jelmerk.server.index.{IndexServiceGrpc, Result, SearchRequest}
 import io.grpc.netty.NettyServerBuilder
 import org.apache.hadoop.conf.Configuration
 

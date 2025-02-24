@@ -1,4 +1,4 @@
-package com.github.jelmerk.serving.client
+package com.github.jelmerk.index
 
 import java.net.InetSocketAddress
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
@@ -10,8 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
-import com.github.jelmerk.registration.server.PartitionAndReplica
-import com.github.jelmerk.server.index._
+import com.github.jelmerk.registration.PartitionAndReplica
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.spark.sql.Row
