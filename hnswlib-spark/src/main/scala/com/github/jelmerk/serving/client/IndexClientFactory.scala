@@ -4,7 +4,7 @@ import java.net.InetSocketAddress
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
-import scala.collection.Seq
+import scala.collection.{mutable, Seq}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
@@ -20,9 +20,8 @@ class IndexClient[TId, TVector, TDistance](
     indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     vectorConverter: (String, Row) => SearchRequest.Vector,
     idExtractor: Result => TId,
-    distanceExtractor: Result => TDistance,
-    distanceOrdering: Ordering[TDistance]
-) {
+    distanceExtractor: Result => TDistance
+)(implicit distanceOrdering: Ordering[TDistance]) {
 
   private val random = new Random()
 
@@ -167,10 +166,7 @@ class IndexClient[TId, TVector, TDistance](
         result   <- response.results
       } yield idExtractor(result) -> distanceExtractor(result)
 
-      val results = allResults
-        .sortBy(_._2)(distanceOrdering)
-        .take(k)
-        .map { case (id, distance) => Row(id, distance) }
+      val results = topK(allResults, k).map { case (id, distance) => Row(id, distance) }
 
       val n      = row.length
       val values = Array.ofDim[Any](n + 1)
@@ -185,17 +181,27 @@ class IndexClient[TId, TVector, TDistance](
     }
   }
 
+  private def topK(allResults: Seq[(TId, TDistance)], k: Int): Seq[(TId, TDistance)] = {
+    val pq = mutable.PriorityQueue[(TId, TDistance)]()(distanceOrdering.on[(TId, TDistance)](_._2).reverse)
+    for ((id, distance) <- allResults) {
+      if (pq.size < k) pq.enqueue((id, distance))
+      else if (distanceOrdering.lt(distance, pq.head._2)) {
+        pq.dequeue()
+        pq.enqueue((id, distance))
+      }
+    }
+    pq.dequeueAll
+  }
 }
 
 class IndexClientFactory[TId, TVector, TDistance](
     vectorConverter: (String, Row) => SearchRequest.Vector,
     idExtractor: Result => TId,
-    distanceExtractor: Result => TDistance,
-    distanceOrdering: Ordering[TDistance]
-) extends Serializable {
+    distanceExtractor: Result => TDistance
+)(implicit distanceOrdering: Ordering[TDistance])
+    extends Serializable {
 
-  def create(servers: Map[PartitionAndReplica, InetSocketAddress]): IndexClient[TId, TVector, TDistance] = {
-    new IndexClient(servers, vectorConverter, idExtractor, distanceExtractor, distanceOrdering)
-  }
+  def create(servers: Map[PartitionAndReplica, InetSocketAddress]): IndexClient[TId, TVector, TDistance] =
+    new IndexClient(servers, vectorConverter, idExtractor, distanceExtractor)
 
 }

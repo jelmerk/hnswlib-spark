@@ -381,72 +381,63 @@ package object knn {
       extends IndexClientFactory[Int, Vector, Double](
         convertVector,
         extractIntId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] implicit object LongVectorIndexClientFactory
       extends IndexClientFactory[Long, Vector, Double](
         convertVector,
         extractLongId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] implicit object StringVectorIndexClientFactory
       extends IndexClientFactory[String, Vector, Double](
         convertVector,
         extractStringId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] implicit object IntFloatArrayIndexClientFactory
       extends IndexClientFactory[Int, Array[Float], Float](
         convertFloatArray,
         extractIntId,
-        extractFloatDistance,
-        implicitly[Ordering[Float]]
+        extractFloatDistance
       )
 
   private[knn] implicit object LongFloatArrayIndexClientFactory
       extends IndexClientFactory[Long, Array[Float], Float](
         convertFloatArray,
         extractLongId,
-        extractFloatDistance,
-        implicitly[Ordering[Float]]
+        extractFloatDistance
       )
 
   private[knn] implicit object StringFloatArrayIndexClientFactory
       extends IndexClientFactory[String, Array[Float], Float](
         convertFloatArray,
         extractStringId,
-        extractFloatDistance,
-        implicitly[Ordering[Float]]
+        extractFloatDistance
       )
 
   private[knn] implicit object IntDoubleArrayIndexClientFactory
       extends IndexClientFactory[Int, Array[Double], Double](
         convertDoubleArray,
         extractIntId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] implicit object LongDoubleArrayIndexClientFactory
       extends IndexClientFactory[Long, Array[Double], Double](
         convertDoubleArray,
         extractLongId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] implicit object StringDoubleArrayIndexClientFactory
       extends IndexClientFactory[String, Array[Double], Double](
         convertDoubleArray,
         extractStringId,
-        extractDoubleDistance,
-        implicitly[Ordering[Double]]
+        extractDoubleDistance
       )
 
   private[knn] def convertFloatArray(column: String, row: Row): SearchRequest.Vector =
