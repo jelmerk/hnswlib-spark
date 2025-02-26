@@ -883,7 +883,10 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
   *   number of partitions
   */
 private[knn] class PartitionIdPartitioner(override val numPartitions: Int) extends Partitioner {
-  override def getPartition(key: Any): Int = key.asInstanceOf[Int]
+  override def getPartition(key: Any): Int = key match {
+    case k: Int => k
+    case _      => throw new IllegalArgumentException("Partition key is not an integer.")
+  }
 }
 
 /** Partitioner that uses precomputed partitions. Each unique partition and replica combination its own partition
@@ -925,8 +928,6 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
     * @tparam TDistance
     *   type of distance between items
     *
-    * @param uid
-    *   identifier
     * @param jobGroup
     *   Job group of the job that holds on the indices being served
     * @param indexRdd
@@ -964,11 +965,11 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
       if (numReplicas > 0) keyedIndexRdd.partitionBy(new PartitionReplicaIdPartitioner(numPartitions, numReplicas))
       else keyedIndexRdd
 
-    val driverHost = sparkContext.getConf.get("spark.driver.host")
-    val server     = RegistrationServerFactory.create(driverHost, numPartitions, numReplicas)
-    server.start()
+    val driverHost    = sparkContext.getConf.get("spark.driver.host")
+    val server        = RegistrationServerFactory.create(driverHost, numPartitions, numReplicas)
+    val serverAddress = server.start()
     try {
-      val driverPort = server.address.getPort
+      val driverPort = serverAddress.getPort
 
       logInfo(s"Started registration server on $driverHost:$driverPort")
 
@@ -980,9 +981,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
           val numThreads          = TaskContext.get().cpus()
           val server = indexServerFactory.create(executorHost, index, serializableConfiguration.value, numThreads)
 
-          server.start()
-
-          val serverAddress = server.address
+          val serverAddress = server.start()
 
           logInfo(
             partitionNum,
@@ -1000,7 +999,7 @@ private[knn] trait IndexServing extends ModelLogging with IndexType {
 
             logInfo(partitionNum, replicaNum, "awaiting requests")
 
-            while (!TaskContext.get().isInterrupted() && !server.isTerminated()) {
+            while (!TaskContext.get().isInterrupted() && !server.isTerminated) {
               Thread.sleep(500)
             }
 

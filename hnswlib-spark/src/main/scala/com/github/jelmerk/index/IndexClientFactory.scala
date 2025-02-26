@@ -24,7 +24,7 @@ class IndexClient[TId, TVector, TDistance](
 
   private val random = new Random()
 
-  private val (channels, grpcClients) = indexAddresses.map { case (key, address) =>
+  private val (channels, grpcClients) = indexAddresses.toSeq.map { case (key, address) =>
     val channel = NettyChannelBuilder
       .forAddress(address)
       .usePlaintext
@@ -33,15 +33,12 @@ class IndexClient[TId, TVector, TDistance](
     (channel, (key, IndexServiceGrpc.stub(channel)))
   }.unzip
 
-  private val partitionClients = grpcClients.toList
-    .sortBy { case (partitionAndReplica, _) => (partitionAndReplica.partitionNum, partitionAndReplica.replicaNum) }
-    .foldLeft(Map.empty[Int, Seq[IndexServiceGrpc.IndexServiceStub]]) {
-      case (acc, (PartitionAndReplica(partitionNum, _), client)) =>
-        val old = acc.getOrElse(partitionNum, Seq.empty[IndexServiceGrpc.IndexServiceStub])
-        acc.updated(partitionNum, old :+ client)
-    }
-
-  private val allPartitions = indexAddresses.map(_._1.partitionNum).toSeq.distinct: Seq[Int] // TODO not very nice
+  private val partitionClients = grpcClients
+    .groupBy(_._1.partitionNum)
+    .map { case (partition, it) => partition -> it.map(_._2).toIndexedSeq }
+    .toIndexedSeq
+    .sortBy(_._1)
+    .map(_._2)
 
   private val threadPool = Executors.newFixedThreadPool(1)
 
@@ -53,19 +50,16 @@ class IndexClient[TId, TVector, TDistance](
   ): Iterator[Row] = {
 
     val queries = batch.map { row =>
-      val partitions = queryPartitionsColumn.fold(allPartitions) { name => row.getAs[Seq[Int]](name) }
+      val partitions = queryPartitionsColumn.map(row.getAs[Seq[Int]])
       val vector     = vectorConverter(vectorColumn, row)
       (partitions, vector)
     }
 
-    // TODO should i use a random client or a client
-    val randomClient = partitionClients.map { case (_, clients) => clients(random.nextInt(clients.size)) }
+    // pick a random replica for every partition
+    val randomClients = partitionClients.map { clients => clients(random.nextInt(clients.size)) }
 
-    val (requestObservers, responseIterators) = randomClient.zipWithIndex.toArray.map { case (client, partition) =>
-      // TODO this is kind of inefficient
-      val partitionCount = queries.count { case (partitions, _) => partitions.contains(partition) }
-
-      val responseStreamObserver = new StreamObserverAdapter[SearchResponse](partitionCount)
+    val (requestObservers, responseIterators) = randomClients.map { client =>
+      val responseStreamObserver = new StreamObserverAdapter[SearchResponse]()
       val requestStreamObserver  = client.search(responseStreamObserver)
 
       (requestStreamObserver, responseStreamObserver: Iterator[SearchResponse])
@@ -80,7 +74,7 @@ class IndexClient[TId, TVector, TDistance](
           last                           = !queriesIterator.hasNext
           (observer, observerPartition) <- requestObservers.zipWithIndex
         } {
-          if (queryPartitions.contains(observerPartition)) {
+          if (queryPartitions.fold(true)(_.contains(observerPartition))) {
             val request = SearchRequest(vector, k)
             observer.onNext(request)
           }
@@ -91,13 +85,16 @@ class IndexClient[TId, TVector, TDistance](
       }
     })
 
-    val expectations = batch.zip(queries).map { case (row, (partitions, _)) => partitions -> row }.iterator
+    val expectations = batch.map { row =>
+      val partitions = queryPartitionsColumn.map(row.getAs[Seq[Int]])
+      partitions -> row
+    }.iterator
 
-    new ResultsIterator(expectations, responseIterators: Array[Iterator[SearchResponse]], k)
+    new ResultsIterator(expectations, responseIterators, k)
   }
 
   def saveIndex(path: String): Unit = {
-    val futures = partitionClients.flatMap { case (partition, clients) =>
+    val futures = partitionClients.zipWithIndex.flatMap { case (clients, partition) =>
       // only the primary replica saves the index
       clients.headOption.map { client =>
         val request = SaveIndexRequest(s"$path/$partition")
@@ -105,7 +102,7 @@ class IndexClient[TId, TVector, TDistance](
       }
     }
 
-    Await.result(Future.sequence(futures), Duration.Inf) // TODO not sure if inf is smart
+    Await.result(Future.sequence(futures), Duration.Inf)
   }
 
   def shutdown(): Unit = {
@@ -113,7 +110,7 @@ class IndexClient[TId, TVector, TDistance](
     threadPool.shutdown()
   }
 
-  private class StreamObserverAdapter[T](expected: Int) extends StreamObserver[T] with Iterator[T] {
+  private class StreamObserverAdapter[T] extends StreamObserver[T] with Iterator[T] {
 
     private val queue   = new LinkedBlockingQueue[Either[Throwable, T]]
     private val counter = new AtomicInteger()
@@ -137,9 +134,9 @@ class IndexClient[TId, TVector, TDistance](
 
     // ========================================== Iterator ==========================================
 
-    override def hasNext: Boolean = {
-      !queue.isEmpty || (counter.get() < expected && !done.get())
-    }
+    // Technically this is incorrect because it never completes but because ResultsIterator orchestrates everything
+    // this should not be an issue
+    override def hasNext: Boolean = !done.get()
 
     override def next(): T = queue.take() match {
       case Right(value) => value
@@ -148,8 +145,8 @@ class IndexClient[TId, TVector, TDistance](
   }
 
   private class ResultsIterator(
-      iterator: Iterator[(Seq[Int], Row)],
-      partitionIterators: Array[Iterator[SearchResponse]],
+      iterator: Iterator[(Option[Seq[Int]], Row)],
+      partitionIterators: IndexedSeq[Iterator[SearchResponse]],
       k: Int
   ) extends Iterator[Row] {
 
@@ -158,7 +155,10 @@ class IndexClient[TId, TVector, TDistance](
     override def next(): Row = {
       val (partitions, row) = iterator.next()
 
-      val responses = partitions.map(partitionIterators.apply).map(_.next())
+      val responses = partitions match {
+        case Some(parts) => parts.map(partitionIterators.apply).map(_.next())
+        case _           => partitionIterators.map(_.next())
+      }
 
       val allResults = for {
         response <- responses
@@ -182,12 +182,15 @@ class IndexClient[TId, TVector, TDistance](
 
   private def topK(allResults: Seq[(TId, TDistance)], k: Int): Seq[(TId, TDistance)] = {
     val pq = mutable.PriorityQueue[(TId, TDistance)]()(distanceOrdering.on[(TId, TDistance)](_._2).reverse)
-    for ((id, distance) <- allResults) {
+    allResults.foreach { case (id, distance) =>
       if (pq.size < k) pq.enqueue((id, distance))
-      else if (distanceOrdering.lt(distance, pq.head._2)) {
-        pq.dequeue()
-        pq.enqueue((id, distance))
-      }
+      else
+        pq.headOption.foreach { case (_, biggestDistance) =>
+          if (distanceOrdering.lt(distance, biggestDistance)) {
+            pq.dequeue()
+            pq.enqueue((id, distance))
+          }
+        }
     }
     pq.dequeueAll
   }

@@ -38,4 +38,4 @@ jobs:
             3.9
       - name: Build and test
         run: |
-          sbt -java-home "$JAVA_HOME_8_X64" clean scalafmtCheckAll blackCheck flake8 +test pyTest -DsparkVersion="$SPARK_VERSION"
+          sbt -java-home "$JAVA_HOME_8_X64" clean scalafmtCheckAll scapegoat blackCheck flake8 +test pyTest -DsparkVersion="$SPARK_VERSION"

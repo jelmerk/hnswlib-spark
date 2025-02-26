@@ -1,13 +1,34 @@
 package com.github.jelmerk.registration
 
 import java.net.InetSocketAddress
-import java.util.concurrent.{CountDownLatch, Executors}
+import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, Executors}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
+import com.github.jelmerk.registration.RegistrationServiceGrpc.RegistrationService
 import io.grpc.netty.NettyServerBuilder
+
+class DefaultRegistrationService(val registrationLatch: CountDownLatch) extends RegistrationService {
+
+  val registrations = new ConcurrentHashMap[PartitionAndReplica, InetSocketAddress]()
+
+  override def register(request: RegisterRequest): Future[RegisterResponse] = {
+
+    val key           = PartitionAndReplica(request.partitionNum, request.replicaNum)
+    val previousValue = Option(registrations.put(key, new InetSocketAddress(request.host, request.port)))
+
+    if (previousValue.isEmpty) {
+      registrationLatch.countDown()
+    }
+
+    Future.successful(RegisterResponse())
+  }
+
+}
+
+final case class PartitionAndReplica(partitionNum: Int, replicaNum: Int)
 
 class RegistrationServer(host: String, numPartitions: Int, numReplicas: Int) {
 
@@ -23,9 +44,14 @@ class RegistrationServer(host: String, numPartitions: Int, numReplicas: Int) {
     .addService(RegistrationServiceGrpc.bindService(service, executionContext))
     .build()
 
-  def start(): Unit = server.start()
-
-  def address: InetSocketAddress = server.getListenSockets.get(0).asInstanceOf[InetSocketAddress] // TODO CLEANUP
+  def start(): InetSocketAddress = {
+    server.start()
+    server.getListenSockets.asScala.headOption
+      .collect { case addr: InetSocketAddress =>
+        addr
+      }
+      .getOrElse(throw new IllegalStateException)
+  }
 
   def awaitRegistrations(): Map[PartitionAndReplica, InetSocketAddress] = {
     service.registrationLatch.await()
