@@ -11,6 +11,7 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 import com.github.jelmerk.registration.PartitionAndReplica
+import io.grpc.ManagedChannel
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.spark.sql.Row
@@ -24,7 +25,10 @@ class IndexClient[TId, TVector, TDistance](
 
   private val random = new Random()
 
-  private val (channels, grpcClients) = indexAddresses.toSeq.map { case (key, address) =>
+  private val (
+    channels: Seq[ManagedChannel],
+    grpcClients: Seq[(PartitionAndReplica, IndexServiceGrpc.IndexServiceStub)]
+  ) = indexAddresses.toSeq.map { case (key, address) =>
     val channel = NettyChannelBuilder
       .forAddress(address)
       .usePlaintext
@@ -33,7 +37,7 @@ class IndexClient[TId, TVector, TDistance](
     (channel, (key, IndexServiceGrpc.stub(channel)))
   }.unzip
 
-  private val partitionClients = grpcClients
+  private val partitionClients: IndexedSeq[IndexedSeq[IndexServiceGrpc.IndexServiceStub]] = grpcClients
     .groupBy(_._1.partitionNum)
     .map { case (partition, it) => partition -> it.map(_._2).toIndexedSeq }
     .toIndexedSeq
@@ -176,7 +180,7 @@ class IndexClient[TId, TVector, TDistance](
       }
       values.update(i, results)
 
-      Row.fromSeq(values.toIndexedSeq)
+      Row(values: _*)
     }
   }
 

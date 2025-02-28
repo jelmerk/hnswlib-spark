@@ -900,9 +900,9 @@ private[knn] class PartitionReplicaIdPartitioner(partitions: Int, replicas: Int)
 
   override def numPartitions: Int = partitions + (replicas * partitions)
 
-  override def getPartition(key: Any): Int = {
-    val (partition, replica) = key.asInstanceOf[(Int, Int)]
-    partition + (replica * partitions)
+  override def getPartition(key: Any): Int = key match {
+    case (partition: Int, replica: Int) => partition + (replica * partitions)
+    case _ => throw new IllegalArgumentException("Partition key is not z pair of integers.")
   }
 }
 
