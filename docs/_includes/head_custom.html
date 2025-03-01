@@ -1,0 +1,28 @@
+<link rel="stylesheet" href="{{ site.baseurl }}/assets/css/tabs.css">
+
+<script>
+    let toggleDark = () => {
+        let setDark = jtd.getTheme() !== 'dark';
+        document.documentElement.setAttribute(
+            'data-theme',
+            setDark ? 'dark' : 'default',
+        );
+        jtd.setTheme(setDark ? 'dark' : 'default');
+        localStorage.setItem('darkMode', String(setDark));
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        let a = document.getElementsByClassName('site-button')[2];
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleDark();
+        });
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            toggleDark();
+        } else {
+            document.documentElement.setAttribute('data-theme', 'default');
+        }
+    });
+</script>

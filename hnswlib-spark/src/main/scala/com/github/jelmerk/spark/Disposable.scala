@@ -1,4 +1,4 @@
-package com.github.jelmerk
+package com.github.jelmerk.spark
 
 /** Classes extending this trait need to be manually disposed. */
 trait Disposable {

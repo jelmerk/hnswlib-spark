@@ -1,0 +1,53 @@
+title: Hnswlib Spark
+description: Nearest neighbour search on apache spark
+theme: just-the-docs
+
+url: https://jelmerk.github.io
+baseurl: /hnswlib-spark
+repository: jelmerk/hnswlib-spark # for github-metadata
+
+aux_links:
+  Project Repository: https://github.com/jelmerk/hnswlib-spark
+  "Dark Mode":
+    - "#"
+
+nav_external_links:
+  - title: Change log
+    url: https://github.com/jelmerk/hnswlib-spark/releases
+  - title: Scala API (Scaladoc)
+    url: https://javadoc.io/doc/com.github.jelmerk/hnswlib-spark_3_5_2.12/latest/index.html
+
+plugins:
+  - jekyll-tabs
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
+  - jekyll-sitemap
+
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: yellow
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+
+
+defaults:
+  - scope:
+      path: "docs" # an empty string here means all files in the project
+      type: "pages"
+    values:
+      layout: "default"
+
+version_jvm: 2.0.0-alpha.10
+version_py: 2.0.0a10

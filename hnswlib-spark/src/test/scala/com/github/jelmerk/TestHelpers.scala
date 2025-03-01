@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.Files
 import java.util.UUID
 
+import com.github.jelmerk.spark.Disposable
 import org.apache.commons.io.FileUtils
 
 object TestHelpers extends TestHelpers

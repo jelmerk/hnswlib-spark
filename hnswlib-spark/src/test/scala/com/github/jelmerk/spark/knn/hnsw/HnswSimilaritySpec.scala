@@ -133,6 +133,11 @@ class HnswSimilaritySpec extends AnyWordSpec with SharedSparkContext {
       ).toDF()
 
       withDisposableResource(hnsw.fit(items)) { model =>
+
+
+        model
+          .transform(items).write.saveAsTable()
+
         val results = model
           .transform(items)
           .as[OutputRow[Int, Array[Double], Double]]
