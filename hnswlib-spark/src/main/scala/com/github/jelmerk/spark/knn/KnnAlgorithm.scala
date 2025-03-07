@@ -11,10 +11,9 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.util.Failure
 
+import com.github.jelmerk.hnswlib.scala._
 import com.github.jelmerk.index.IndexClientFactory
 import com.github.jelmerk.index.IndexServerFactory
-import com.github.jelmerk.knn.ObjectSerializer
-import com.github.jelmerk.knn.scalalike._
 import com.github.jelmerk.registration.{PartitionAndReplica, RegistrationServerFactory}
 import com.github.jelmerk.registration.RegistrationClient
 import com.github.jelmerk.spark.Disposable

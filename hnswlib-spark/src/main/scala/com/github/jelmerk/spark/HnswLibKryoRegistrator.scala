@@ -2,7 +2,7 @@ package com.github.jelmerk.spark
 
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.serializers.JavaSerializer
-import com.github.jelmerk.knn.scalalike.hnsw.HnswIndex
+import com.github.jelmerk.hnswlib.scala.hnsw.HnswIndex
 import com.github.jelmerk.spark.util.SerializableConfiguration
 import org.apache.spark.serializer.KryoRegistrator
 

@@ -6,10 +6,9 @@ import java.net.InetSocketAddress
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
+import com.github.jelmerk.hnswlib.scala.{DistanceFunction, Item, ObjectSerializer}
+import com.github.jelmerk.hnswlib.scala.bruteforce.BruteForceIndex
 import com.github.jelmerk.index.IndexClientFactory
-import com.github.jelmerk.knn.ObjectSerializer
-import com.github.jelmerk.knn.scalalike.{DistanceFunction, Item}
-import com.github.jelmerk.knn.scalalike.bruteforce.BruteForceIndex
 import com.github.jelmerk.registration.PartitionAndReplica
 import com.github.jelmerk.spark.knn._
 import org.apache.spark.SparkContext

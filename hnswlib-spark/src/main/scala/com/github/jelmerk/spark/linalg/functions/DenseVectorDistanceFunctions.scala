@@ -1,6 +1,6 @@
 package com.github.jelmerk.spark.linalg.functions
 
-import com.github.jelmerk.knn.scalalike._
+import com.github.jelmerk.hnswlib.scala._
 import org.apache.spark.ml.linalg.DenseVector
 
 object DenseVectorDistanceFunctions {

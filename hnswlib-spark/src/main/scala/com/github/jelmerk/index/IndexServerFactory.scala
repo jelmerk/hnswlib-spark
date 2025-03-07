@@ -7,8 +7,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
+import com.github.jelmerk.hnswlib.scala.{Index, Item}
 import com.github.jelmerk.index.IndexServiceGrpc.IndexService
-import com.github.jelmerk.knn.scalalike.{Index, Item}
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.commons.io.output.CountingOutputStream

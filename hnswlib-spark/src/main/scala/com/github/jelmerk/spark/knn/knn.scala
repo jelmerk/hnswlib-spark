@@ -6,11 +6,8 @@ import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scala.util.Try
 
-import com.github.jelmerk.index.{DenseVector, DoubleArrayVector, FloatArrayVector, Result, SearchRequest, SparseVector}
-import com.github.jelmerk.index.IndexClientFactory
-import com.github.jelmerk.index.IndexServerFactory
-import com.github.jelmerk.knn.Jdk17DistanceFunctions
-import com.github.jelmerk.knn.scalalike.{
+import com.github.jelmerk.hnswlib.jdk17.Jdk17DistanceFunctions
+import com.github.jelmerk.hnswlib.scala.{
   doubleBrayCurtisDistance,
   doubleCanberraDistance,
   doubleCorrelationDistance,
@@ -29,7 +26,7 @@ import com.github.jelmerk.knn.scalalike.{
   Item,
   ObjectSerializer
 }
-import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{
+import com.github.jelmerk.hnswlib.scala.jdk17DistanceFunctions.{
   vectorFloat128BrayCurtisDistance,
   vectorFloat128CanberraDistance,
   vectorFloat128CosineDistance,
@@ -37,6 +34,9 @@ import com.github.jelmerk.knn.scalalike.jdk17DistanceFunctions.{
   vectorFloat128InnerProduct,
   vectorFloat128ManhattanDistance
 }
+import com.github.jelmerk.index.{DenseVector, DoubleArrayVector, FloatArrayVector, Result, SearchRequest, SparseVector}
+import com.github.jelmerk.index.IndexClientFactory
+import com.github.jelmerk.index.IndexServerFactory
 import com.github.jelmerk.spark.linalg.functions.VectorDistanceFunctions
 import org.apache.spark.ml.linalg.{DenseVector => SparkDenseVector, SparseVector => SparkSparseVector, Vector, Vectors}
 import org.apache.spark.sql.Row

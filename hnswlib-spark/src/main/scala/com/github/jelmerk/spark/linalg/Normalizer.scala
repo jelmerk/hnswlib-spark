@@ -1,6 +1,6 @@
 package com.github.jelmerk.spark.linalg
 
-import com.github.jelmerk.knn.util.VectorUtils
+import com.github.jelmerk.hnswlib.util.VectorUtils
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vector}
