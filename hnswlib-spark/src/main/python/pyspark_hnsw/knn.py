@@ -417,6 +417,7 @@ class BruteForceSimilarity(
         self,
         identifierCol="id",
         queryPartitionsCol=None,
+        partitionCol=None,
         numThreads=None,
         featuresCol="features",
         predictionCol="prediction",
@@ -603,6 +604,7 @@ class HnswSimilarity(
     def setParams(
         self,
         identifierCol="id",
+        partitionCol=None,
         queryPartitionsCol=None,
         numThreads=None,
         featuresCol="features",

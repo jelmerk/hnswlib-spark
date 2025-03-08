@@ -702,6 +702,10 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
 
   override def fit(dataset: Dataset[_]): TModel = {
 
+    if (isSet(partitionCol) && dataset.schema(getPartitionCol).dataType != IntegerType) {
+      throw new IllegalArgumentException(s"partition column $getPartitionCol is not an integer.")
+    }
+
     val identifierType = dataset.schema(getIdentifierCol).dataType
     val vectorType     = dataset.schema(getFeaturesCol).dataType
 

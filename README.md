@@ -10,4 +10,4 @@ To find out more about how to use this library take a look at the [examples](htt
 or browse the [documentation](https://jelmerk.github.io/hnswlib-spark/)
 
 Version 2 of this library is only compatible with spark 3.4.x and above. If you are on an older version you can
-use the [1.x.x](https://github.com/jelmerk/hnswlib-spark/tree/v1.x.x) release
+use the [1.x.x](https://github.com/jelmerk/hnswlib-spark/tree/v1) release

@@ -67,6 +67,10 @@ hnsw = HnswSimilarity(
     featuresCol='features',
     numPartitions=2,
     numThreads=2,
+    k=10,
+    m=16,
+    efConstruction=200,
+    ef=10,
 )
 
 model = hnsw.fit(items)
@@ -82,6 +86,10 @@ val hnsw = new HnswSimilarity()
   .setFeaturesCol("features")
   .setNumPartitions(2)
   .setNumThreads(2)
+  .setK(10)
+  .setM(16)
+  .setEfConstruction(200)
+  .setEf(10)
 
 val model = hnsw.fit(items)
 ```
@@ -99,6 +107,14 @@ indexing but can significantly slow down queries unless the data is pre-partitio
 
 `numThreads` Controls the number of CPU cores used for indexing a shard and cannot exceed the cores available on 
 an executor. It’s best to set this value equal to the executor’s core count for optimal performance.
+
+`k` Sets the number of similar matches to return
+
+`m` The maximum number of bi-directional connections (neighbors) per node. Higher values improve recall but increase memory usage and search time.
+
+`ef` The size of the dynamic candidate list during the search. A higher ef improves recall at the cost of search speed.
+
+`efConstruction` Similar to ef, but used during index construction. A higher efConstruction results in a more accurate graph with better recall but increases indexing time and memory usage
 
 After fitting the model, the Spark UI will show running tasks even after the fit method returns.
 
@@ -257,7 +273,7 @@ import com.github.jelmerk.spark.knn.hnsw.HnswSimilarityModel
 
 model.write.overwrite().save(path)
 
-loaded = HnswSimilarityModel.read().load(path)
+val loaded = HnswSimilarityModel.read.load(path)
 
 ```
 {% endtab %}
@@ -334,12 +350,13 @@ Brute-force knn search is very slow, so use a small sample to assess accuracy.
 ```python
 from pyspark.ml import Pipeline
 
-from pyspark_hnsw.knn import BruteForceSimilarity, HnswSimilarity, KnnSimilarityEvaluator
+from pyspark_hnsw.evaluation import KnnSimilarityEvaluator
+from pyspark_hnsw.knn import BruteForceSimilarity, HnswSimilarity
 
 hnsw = HnswSimilarity(
     identifierCol='id',
     featuresCol='features',
-    numPartitions=2,
+    numPartitions=1,
     numThreads=2,
     k=10,
     distanceFunction='cosine',
@@ -349,7 +366,7 @@ hnsw = HnswSimilarity(
 bruteForce = BruteForceSimilarity(
     identifierCol=hnsw.getIdentifierCol(),
     featuresCol=hnsw.getFeaturesCol(),
-    numPartitions=2,
+    numPartitions=1,
     numThreads=2,
     k=hnsw.getK(),
     distanceFunction=hnsw.getDistanceFunction(),
@@ -381,7 +398,7 @@ import com.github.jelmerk.spark.knn.hnsw.HnswSimilarity
 val hnsw = new HnswSimilarity()
   .setIdentifierCol("id")
   .setFeaturesCol("features")
-  .setNumPartitions(2)
+  .setNumPartitions(1)
   .setNumThreads(2)
   .setK(10)
   .setDistanceFunction("cosine")
@@ -390,7 +407,7 @@ val hnsw = new HnswSimilarity()
 val bruteForce = new BruteForceSimilarity()
   .setIdentifierCol(hnsw.getIdentifierCol)
   .setFeaturesCol(hnsw.getFeaturesCol)
-  .setNumPartitions(2)
+  .setNumPartitions(1)
   .setNumThreads(2)
   .setK(hnsw.getK)
   .setDistanceFunction(hnsw.getDistanceFunction)
@@ -462,7 +479,7 @@ more efficient.
 
 {% tab example_8 python %}
 ```python
-from pyspark_hnsw.knn import Normalizer
+from pyspark_hnsw.linalg import Normalizer
 
 normalizer = Normalizer(inputCol="vector", outputCol="normalized_vector")
 
