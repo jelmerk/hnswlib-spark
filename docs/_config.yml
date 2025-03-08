@@ -11,6 +11,9 @@ aux_links:
   "Dark Mode":
     - "#"
 
+include:
+  - google316810aea78c33a6.html
+
 nav_external_links:
   - title: Examples
     url: https://github.com/jelmerk/hnswlib-spark/tree/master/hnswlib-spark-examples
