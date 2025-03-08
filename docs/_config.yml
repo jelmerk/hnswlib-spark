@@ -13,7 +13,7 @@ aux_links:
 
 nav_external_links:
   - title: Examples
-    url: https://github.com/jelmerk/hnswlib-spark/tree/v2/hnswlib-spark-examples
+    url: https://github.com/jelmerk/hnswlib-spark/tree/master/hnswlib-spark-examples
   - title: Change log
     url: https://github.com/jelmerk/hnswlib-spark/releases
   - title: Scala API (Scaladoc)
@@ -51,5 +51,5 @@ defaults:
     values:
       layout: "default"
 
-version_jvm: 2.0.0-alpha.10
-version_py: 2.0.0a10
+version_jvm: 2.0.0-beta.1
+version_py: 2.0.0b1
