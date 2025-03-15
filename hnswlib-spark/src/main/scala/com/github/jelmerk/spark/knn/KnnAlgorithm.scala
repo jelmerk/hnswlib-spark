@@ -49,7 +49,7 @@ private[knn] final case class ModelMetaData(
     paramMap: ModelParameters
 )
 
-final private case class ModelParameters(
+private final case class ModelParameters(
     featuresCol: String,
     predictionCol: String,
     k: Int,

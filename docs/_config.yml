@@ -17,6 +17,8 @@ include:
 nav_external_links:
   - title: Examples
     url: https://github.com/jelmerk/hnswlib-spark/tree/master/hnswlib-spark-examples
+  - title: Discussions
+    url: https://github.com/jelmerk/hnswlib-spark/discussions
   - title: Change log
     url: https://github.com/jelmerk/hnswlib-spark/releases
   - title: Scala API (Scaladoc)

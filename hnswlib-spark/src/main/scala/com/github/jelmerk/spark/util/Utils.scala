@@ -6,8 +6,7 @@ import scala.util.control.NonFatal
 
 import org.apache.spark.internal.Logging
 
-/** Copied from org.apache.spark.util.Utils
-  */
+/** Copied from org.apache.spark.util.Utils */
 private[spark] object Utils extends Logging {
 
   /** Execute a block of code that returns a value, re-throwing any non-fatal uncaught exceptions as IOException. This
