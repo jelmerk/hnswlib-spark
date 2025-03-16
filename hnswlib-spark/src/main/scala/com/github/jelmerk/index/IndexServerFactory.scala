@@ -9,6 +9,7 @@ import scala.util.Try
 
 import com.github.jelmerk.hnswlib.scala.{Index, Item}
 import com.github.jelmerk.index.IndexServiceGrpc.IndexService
+import com.github.jelmerk.spark.knn.Codec
 import io.grpc.netty.NettyServerBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.commons.io.output.CountingOutputStream
@@ -18,9 +19,9 @@ import org.apache.hadoop.fs.Path
 class DefaultIndexService[TId, TVector, TItem <: Item[TId, TVector], TDistance](
     index: Index[TId, TVector, TItem, TDistance],
     hadoopConfiguration: Configuration,
-    vectorExtractor: SearchRequest => TVector,
-    resultIdConverter: TId => Result.Id,
-    resultDistanceConverter: TDistance => Result.Distance
+    vectorCodec: Codec[TVector, Vector],
+    idCodec: Codec[TId, Id],
+    distanceCodec: Codec[TDistance, Distance]
 )(implicit
     executionContext: ExecutionContext
 ) extends IndexService {
@@ -29,14 +30,14 @@ class DefaultIndexService[TId, TVector, TItem <: Item[TId, TVector], TDistance](
     new StreamObserver[SearchRequest] {
       override def onNext(request: SearchRequest): Unit = {
 
-        val vector  = vectorExtractor(request)
+        val vector  = vectorCodec.decode(request.getVector)
         val nearest = index.findNearest(vector, request.k)
 
         val results = nearest.map { searchResult =>
-          val id       = resultIdConverter(searchResult.item.id)
-          val distance = resultDistanceConverter(searchResult.distance)
+          val id       = idCodec.encode(searchResult.item.id)
+          val distance = distanceCodec.encode(searchResult.distance)
 
-          Result(id, distance)
+          Result(Some(id), Some(distance))
         }
 
         val response = SearchResponse(results)
@@ -66,13 +67,15 @@ class DefaultIndexService[TId, TVector, TItem <: Item[TId, TVector], TDistance](
     SaveIndexResponse(bytesWritten = countingOutputStream.getByteCount)
   }
 
+  override def summary(request: SummaryRequest): Future[SummaryResponse] =
+    Future.successful(SummaryResponse(index.size))
 }
 
 class IndexServer[TId, TVector, TItem <: Item[TId, TVector] with Product, TDistance](
     host: String,
-    vectorExtractor: SearchRequest => TVector,
-    resultIdConverter: TId => Result.Id,
-    resultDistanceConverter: TDistance => Result.Distance,
+    vectorCodec: Codec[TVector, Vector],
+    idCodec: Codec[TId, Id],
+    distanceCodec: Codec[TDistance, Distance],
     index: Index[TId, TVector, TItem, TDistance],
     hadoopConfig: Configuration,
     threads: Int
@@ -89,7 +92,7 @@ class IndexServer[TId, TVector, TItem <: Item[TId, TVector] with Product, TDista
 
   private implicit val ec: ExecutionContext = ExecutionContext.global
   private val service =
-    new DefaultIndexService(index, hadoopConfig, vectorExtractor, resultIdConverter, resultDistanceConverter)
+    new DefaultIndexService(index, hadoopConfig, vectorCodec, idCodec, distanceCodec)
 
   // Build the gRPC server
   private val server = NettyServerBuilder
@@ -122,9 +125,9 @@ class IndexServer[TId, TVector, TItem <: Item[TId, TVector] with Product, TDista
 }
 
 class IndexServerFactory[TId, TVector, TItem <: Item[TId, TVector] with Product, TDistance](
-    vectorExtractor: SearchRequest => TVector,
-    resultIdConverter: TId => Result.Id,
-    resultDistanceConverter: TDistance => Result.Distance
+    vectorCodec: Codec[TVector, Vector],
+    idCodec: Codec[TId, Id],
+    distanceCodec: Codec[TDistance, Distance]
 ) extends Serializable {
 
   def create(
@@ -135,9 +138,9 @@ class IndexServerFactory[TId, TVector, TItem <: Item[TId, TVector] with Product,
   ): IndexServer[TId, TVector, TItem, TDistance] = {
     new IndexServer[TId, TVector, TItem, TDistance](
       host,
-      vectorExtractor,
-      resultIdConverter,
-      resultDistanceConverter,
+      vectorCodec,
+      idCodec,
+      distanceCodec,
       index,
       hadoopConfig,
       threads

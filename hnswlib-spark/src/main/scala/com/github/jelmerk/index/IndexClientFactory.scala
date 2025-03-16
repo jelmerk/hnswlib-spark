@@ -11,16 +11,19 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 import com.github.jelmerk.registration.PartitionAndReplica
+import com.github.jelmerk.spark.knn.Codec
 import io.grpc.ManagedChannel
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import org.apache.spark.sql.Row
 
+final case class PartitionSummary(partition: Int, size: Int, hosts: Seq[String])
+
 class IndexClient[TId, TVector, TDistance](
     indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
-    vectorConverter: (String, Row) => SearchRequest.Vector,
-    idExtractor: Result => TId,
-    distanceExtractor: Result => TDistance
+    vectorConverter: (String, Row) => Vector,
+    idCodec: Codec[TId, Id],
+    distanceCodec: Codec[TDistance, Distance]
 )(implicit distanceOrdering: Ordering[TDistance]) {
 
   private val random = new Random()
@@ -79,7 +82,7 @@ class IndexClient[TId, TVector, TDistance](
           (observer, observerPartition) <- requestObservers.zipWithIndex
         } {
           if (queryPartitions.fold(true)(_.contains(observerPartition))) {
-            val request = SearchRequest(vector, k)
+            val request = SearchRequest(Some(vector), k)
             observer.onNext(request)
           }
           if (last) {
@@ -106,6 +109,21 @@ class IndexClient[TId, TVector, TDistance](
       }
     }
 
+    Await.result(Future.sequence(futures), Duration.Inf)
+  }
+
+  def partitionSummaries(): Seq[PartitionSummary] = {
+    val futures = partitionClients.zipWithIndex.flatMap { case (clients, partition) =>
+      clients.headOption.map { client =>
+        val request = SummaryRequest()
+        client.summary(request).map { resp =>
+          val hosts = indexAddresses.toList.collect {
+            case (PartitionAndReplica(id, _), addr) if partition == id => s"${addr.getHostName}:${addr.getPort}"
+          }
+          PartitionSummary(partition, resp.size, hosts)
+        }
+      }
+    }
     Await.result(Future.sequence(futures), Duration.Inf)
   }
 
@@ -167,7 +185,7 @@ class IndexClient[TId, TVector, TDistance](
       val allResults = for {
         response <- responses
         result   <- response.results
-      } yield idExtractor(result) -> distanceExtractor(result)
+      } yield idCodec.decode(result.getId) -> distanceCodec.decode(result.getDistance)
 
       val results = topK(allResults, k).map { case (id, distance) => Row(id, distance) }
 
@@ -180,7 +198,10 @@ class IndexClient[TId, TVector, TDistance](
       }
       values.update(i, results)
 
-      Row(values: _*)
+      // ArraySeq.unsafeWrapArray is only available in 2.13 and toIndexedSeq will be too slow
+      @annotation.nowarn("cat=deprecation")
+      val result = Row(values: _*)
+      result
     }
   }
 
@@ -201,13 +222,13 @@ class IndexClient[TId, TVector, TDistance](
 }
 
 class IndexClientFactory[TId, TVector, TDistance](
-    vectorConverter: (String, Row) => SearchRequest.Vector,
-    idExtractor: Result => TId,
-    distanceExtractor: Result => TDistance
+    vectorConverter: (String, Row) => Vector,
+    idCodec: Codec[TId, Id],
+    distanceCodec: Codec[TDistance, Distance]
 )(implicit distanceOrdering: Ordering[TDistance])
     extends Serializable {
 
   def create(servers: Map[PartitionAndReplica, InetSocketAddress]): IndexClient[TId, TVector, TDistance] =
-    new IndexClient(servers, vectorConverter, idExtractor, distanceExtractor)
+    new IndexClient(servers, vectorConverter, idCodec, distanceCodec)
 
 }

@@ -3,6 +3,7 @@ package com.github.jelmerk.spark.knn.bruteforce
 import java.io.File
 
 import com.github.jelmerk.TestHelpers._
+import com.github.jelmerk.index.PartitionSummary
 import com.github.jelmerk.spark.SharedSparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.ml.linalg.{DenseVector, SparseVector, Vectors}
@@ -225,6 +226,21 @@ class BruteForceSimilaritySpec extends AnyWordSpec with SharedSparkContext {
             Seq(Neighbor(1000000, 0.0f), Neighbor(3000000, 0.06521261f), Neighbor(2000000, 0.11621308f))
           )
         }
+      }
+    }
+
+    "fetch partition summaries" in {
+      val items = Seq(
+        InputRow(1000000L, Vectors.dense(0.0110, 0.2341)),
+        InputRow(2000000L, Vectors.dense(0.2300, 0.3891)),
+        InputRow(3000000L, Vectors.dense(0.4300, 0.9891))
+      )
+
+      withDisposableResource(bruteforce.fit(items.toDF())) { model =>
+        val summaries = model.partitionSummaries().as[PartitionSummary].collect()
+
+        summaries should have size bruteforce.getNumPartitions.toLong
+        summaries.map(_.size).sum should be(items.size)
       }
     }
   }
