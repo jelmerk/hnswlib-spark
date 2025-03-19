@@ -11,9 +11,9 @@ import com.github.jelmerk.hnswlib.scala.hnsw._
 import com.github.jelmerk.index.IndexClientFactory
 import com.github.jelmerk.registration.PartitionAndReplica
 import com.github.jelmerk.spark.knn._
-import org.apache.spark.SparkContext
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
+import org.apache.spark.sql.SparkSession
 
 private[hnsw] trait HnswIndexType extends IndexType {
   protected override type TIndex[TId, TVector, TItem <: Item[TId, TVector], TDistance] =
@@ -50,7 +50,7 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       numPartitions: Int,
       numReplicas: Int,
       numThreads: Int,
-      sparkContext: SparkContext,
+      sparkSession: SparkSession,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
       jobGroup: String
@@ -60,7 +60,7 @@ private[hnsw] trait HnswModelCreator extends ModelCreator[HnswSimilarityModel] {
       numPartitions,
       numReplicas,
       numThreads,
-      sparkContext,
+      sparkSession,
       indices,
       clientFactory,
       jobGroup
@@ -144,7 +144,7 @@ private[knn] class HnswSimilarityModelImpl[
     val numPartitions: Int,
     val numReplicas: Int,
     val numThreads: Int,
-    val sparkContext: SparkContext,
+    val sparkSession: SparkSession,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     val clientFactory: IndexClientFactory[TId, TVector, TDistance],
     val jobGroup: String
@@ -158,7 +158,7 @@ private[knn] class HnswSimilarityModelImpl[
       numPartitions,
       numReplicas,
       numThreads,
-      sparkContext,
+      sparkSession,
       indexAddresses,
       clientFactory,
       jobGroup

@@ -19,7 +19,7 @@ import com.github.jelmerk.registration.RegistrationClient
 import com.github.jelmerk.spark.Disposable
 import com.github.jelmerk.spark.util.SerializableConfiguration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.{Partitioner, SparkContext, SparkEnv, TaskContext}
+import org.apache.spark.{Partitioner, SparkEnv, TaskContext}
 import org.apache.spark.internal.Logging
 import org.apache.spark.ml.{Estimator, Model}
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
@@ -166,8 +166,8 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
     *   number of replicas
     * @param numThreads
     *   number of threads
-    * @param sparkContext
-    *   the spark context
+    * @param sparkSession
+    *   the spark session
     * @param indices
     *   map of index servers
     * @param clientFactory
@@ -196,7 +196,7 @@ private[knn] trait ModelCreator[TModel <: KnnModelBase[TModel]] {
       numPartitions: Int,
       numReplicas: Int,
       numThreads: Int,
-      sparkContext: SparkContext,
+      sparkSession: SparkSession,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
       jobGroup: String
@@ -515,7 +515,7 @@ private[knn] abstract class KnnModelReader[TModel <: KnnModelBase[TModel]]
       metadata.numPartitions,
       metadata.numReplicas,
       metadata.numThreads,
-      sc,
+      sparkSession,
       servers,
       clientFactory,
       jobGroup
@@ -542,7 +542,7 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
     with KnnModelParams
     with Disposable {
 
-  private[knn] def sparkContext: SparkContext
+  private[knn] val sparkSession: SparkSession
 
   private[knn] def jobGroup: String
 
@@ -562,9 +562,11 @@ private[knn] abstract class KnnModelBase[TModel <: KnnModelBase[TModel]]
 
   def isDisposed: Boolean = disposed
 
+  def partitionSummaries(): DataFrame
+
   /** Disposes of the spark resources associated with this model. Afterward it can no longer be used */
   override def dispose(): Unit = {
-    sparkContext.cancelJobGroup(jobGroup)
+    sparkSession.sparkContext.cancelJobGroup(jobGroup)
 
     disposed = true
   }
@@ -641,6 +643,21 @@ private[knn] trait KnnModelOps[
         )
       }
     spark.createDataFrame(rowRdd, outputSchema)
+  }
+
+  // todo maybe center point, count, hosts
+  override def partitionSummaries(): DataFrame = {
+
+    import sparkSession.implicits._
+
+    val client = clientFactory.create(indexAddresses)
+    val summaries =
+      try {
+        client.partitionSummaries()
+      } finally {
+        client.shutdown()
+      }
+    summaries.toSeq.toDF()
   }
 
   override def transformSchema(schema: StructType): StructType = {
@@ -847,7 +864,7 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       getNumPartitions,
       getNumReplicas,
       getNumThreads,
-      sparkContext,
+      sc,
       registrations,
       indexClientFactory,
       jobGroup

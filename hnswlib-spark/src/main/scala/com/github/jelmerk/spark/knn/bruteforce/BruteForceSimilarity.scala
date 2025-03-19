@@ -11,9 +11,9 @@ import com.github.jelmerk.hnswlib.scala.bruteforce.BruteForceIndex
 import com.github.jelmerk.index.IndexClientFactory
 import com.github.jelmerk.registration.PartitionAndReplica
 import com.github.jelmerk.spark.knn._
-import org.apache.spark.SparkContext
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util.{DefaultParamsReadable, Identifiable, MLReadable, MLReader, MLWritable, MLWriter}
+import org.apache.spark.sql.SparkSession
 
 private[bruteforce] trait BruteForceIndexType extends IndexType {
   protected override type TIndex[TId, TVector, TItem <: Item[TId, TVector], TDistance] =
@@ -45,7 +45,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       numPartitions: Int,
       numReplicas: Int,
       numThreads: Int,
-      sparkContext: SparkContext,
+      sparkSession: SparkSession,
       indices: Map[PartitionAndReplica, InetSocketAddress],
       clientFactory: IndexClientFactory[TId, TVector, TDistance],
       jobGroup: String
@@ -55,7 +55,7 @@ private[bruteforce] trait BruteForceModelCreator extends ModelCreator[BruteForce
       numPartitions,
       numReplicas,
       numThreads,
-      sparkContext,
+      sparkSession,
       indices,
       clientFactory,
       jobGroup
@@ -89,7 +89,7 @@ private[knn] class BruteForceSimilarityModelImpl[
     val numPartitions: Int,
     val numReplicas: Int,
     val numThreads: Int,
-    val sparkContext: SparkContext,
+    val sparkSession: SparkSession,
     val indexAddresses: Map[PartitionAndReplica, InetSocketAddress],
     val clientFactory: IndexClientFactory[TId, TVector, TDistance],
     val jobGroup: String
@@ -110,7 +110,7 @@ private[knn] class BruteForceSimilarityModelImpl[
       numPartitions,
       numReplicas,
       numThreads,
-      sparkContext,
+      sparkSession,
       indexAddresses,
       clientFactory,
       jobGroup

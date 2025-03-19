@@ -10,7 +10,7 @@ from pyspark.ml.param.shared import (
     TypeConverters,
 )
 from pyspark.mllib.common import inherit_doc
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
 
 # noinspection PyProtectedMember
 from pyspark import keyword_only
@@ -32,6 +32,10 @@ JR = TypeVar("JR", bound="HnswLibMLReader")
 
 
 class KnnModel(JavaModel):
+    def partitionSummaries(self) -> DataFrame:
+        assert self._java_obj is not None
+        return self._java_obj.partitionSummaries()
+
     def dispose(self) -> None:
         assert self._java_obj is not None
         return self._java_obj.dispose()

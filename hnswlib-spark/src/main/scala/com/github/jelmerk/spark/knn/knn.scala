@@ -34,9 +34,17 @@ import com.github.jelmerk.hnswlib.scala.jdk17DistanceFunctions.{
   vectorFloat128InnerProduct,
   vectorFloat128ManhattanDistance
 }
-import com.github.jelmerk.index.{DenseVector, DoubleArrayVector, FloatArrayVector, Result, SearchRequest, SparseVector}
-import com.github.jelmerk.index.IndexClientFactory
-import com.github.jelmerk.index.IndexServerFactory
+import com.github.jelmerk.index.{
+  DenseVector,
+  Distance,
+  DoubleArrayVector,
+  FloatArrayVector,
+  Id => GrpcId,
+  IndexClientFactory,
+  IndexServerFactory,
+  SparseVector,
+  Vector => GrpcVector
+}
 import com.github.jelmerk.spark.linalg.functions.VectorDistanceFunctions
 import org.apache.spark.ml.linalg.{DenseVector => SparkDenseVector, SparseVector => SparkSparseVector, Vector, Vectors}
 import org.apache.spark.sql.Row
@@ -309,169 +317,209 @@ package object knn {
 
   private[knn] implicit object IntVectorIndexServerFactory
       extends IndexServerFactory[Int, Vector, IntVectorIndexItem, Double](
-        extractVector,
-        convertIntId,
-        convertDoubleDistance
+        VectorCodec,
+        IntIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object LongVectorIndexServerFactory
       extends IndexServerFactory[Long, Vector, LongVectorIndexItem, Double](
-        extractVector,
-        convertLongId,
-        convertDoubleDistance
+        VectorCodec,
+        LongIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object StringVectorIndexServerFactory
       extends IndexServerFactory[String, Vector, StringVectorIndexItem, Double](
-        extractVector,
-        convertStringId,
-        convertDoubleDistance
+        VectorCodec,
+        StringIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object IntFloatArrayIndexServerFactory
       extends IndexServerFactory[Int, Array[Float], IntFloatArrayIndexItem, Float](
-        extractFloatArray,
-        convertIntId,
-        convertFloatDistance
+        FloatArrayCodec,
+        IntIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object LongFloatArrayIndexServerFactory
       extends IndexServerFactory[Long, Array[Float], LongFloatArrayIndexItem, Float](
-        extractFloatArray,
-        convertLongId,
-        convertFloatDistance
+        FloatArrayCodec,
+        LongIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object StringFloatArrayIndexServerFactory
       extends IndexServerFactory[String, Array[Float], StringFloatArrayIndexItem, Float](
-        extractFloatArray,
-        convertStringId,
-        convertFloatDistance
+        FloatArrayCodec,
+        StringIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object IntDoubleArrayIndexServerFactory
       extends IndexServerFactory[Int, Array[Double], IntDoubleArrayIndexItem, Double](
-        extractDoubleArray,
-        convertIntId,
-        convertDoubleDistance
+        DoubleArrayCodec,
+        IntIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object LongDoubleArrayIndexServerFactory
       extends IndexServerFactory[Long, Array[Double], LongDoubleArrayIndexItem, Double](
-        extractDoubleArray,
-        convertLongId,
-        convertDoubleDistance
+        DoubleArrayCodec,
+        LongIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object StringDoubleArrayIndexServerFactory
       extends IndexServerFactory[String, Array[Double], StringDoubleArrayIndexItem, Double](
-        extractDoubleArray,
-        convertStringId,
-        convertDoubleDistance
+        DoubleArrayCodec,
+        StringIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object IntVectorIndexClientFactory
       extends IndexClientFactory[Int, Vector, Double](
         convertVector,
-        extractIntId,
-        extractDoubleDistance
+        IntIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object LongVectorIndexClientFactory
       extends IndexClientFactory[Long, Vector, Double](
         convertVector,
-        extractLongId,
-        extractDoubleDistance
+        LongIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object StringVectorIndexClientFactory
       extends IndexClientFactory[String, Vector, Double](
         convertVector,
-        extractStringId,
-        extractDoubleDistance
+        StringIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object IntFloatArrayIndexClientFactory
       extends IndexClientFactory[Int, Array[Float], Float](
         convertFloatArray,
-        extractIntId,
-        extractFloatDistance
+        IntIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object LongFloatArrayIndexClientFactory
       extends IndexClientFactory[Long, Array[Float], Float](
         convertFloatArray,
-        extractLongId,
-        extractFloatDistance
+        LongIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object StringFloatArrayIndexClientFactory
       extends IndexClientFactory[String, Array[Float], Float](
         convertFloatArray,
-        extractStringId,
-        extractFloatDistance
+        StringIdCodec,
+        FloatDistance
       )
 
   private[knn] implicit object IntDoubleArrayIndexClientFactory
       extends IndexClientFactory[Int, Array[Double], Double](
         convertDoubleArray,
-        extractIntId,
-        extractDoubleDistance
+        IntIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object LongDoubleArrayIndexClientFactory
       extends IndexClientFactory[Long, Array[Double], Double](
         convertDoubleArray,
-        extractLongId,
-        extractDoubleDistance
+        LongIdCodec,
+        DoubleDistance
       )
 
   private[knn] implicit object StringDoubleArrayIndexClientFactory
       extends IndexClientFactory[String, Array[Double], Double](
         convertDoubleArray,
-        extractStringId,
-        extractDoubleDistance
+        StringIdCodec,
+        DoubleDistance
       )
 
-  private[knn] def convertFloatArray(column: String, row: Row): SearchRequest.Vector =
-    SearchRequest.Vector.FloatArrayVector(FloatArrayVector(row.getAs[Seq[Float]](column).toArray))
+  private[knn] def convertFloatArray(column: String, row: Row): GrpcVector =
+    GrpcVector(GrpcVector.Value.FloatArrayVector(FloatArrayVector(row.getAs[Seq[Float]](column).toArray)))
 
-  private[knn] def convertDoubleArray(column: String, row: Row): SearchRequest.Vector =
-    SearchRequest.Vector.DoubleArrayVector(DoubleArrayVector(row.getAs[Seq[Double]](column).toArray))
+  private[knn] def convertDoubleArray(column: String, row: Row): GrpcVector =
+    GrpcVector(GrpcVector.Value.DoubleArrayVector(DoubleArrayVector(row.getAs[Seq[Double]](column).toArray)))
 
-  private[knn] def convertVector(column: String, row: Row): SearchRequest.Vector = row.getAs[Vector](column) match {
-    case v: SparkDenseVector  => SearchRequest.Vector.DenseVector(DenseVector(v.values))
-    case v: SparkSparseVector => SearchRequest.Vector.SparseVector(SparseVector(v.size, v.indices, v.values))
+  private[knn] def convertVector(column: String, row: Row): GrpcVector = row.getAs[Vector](column) match {
+    case v: SparkDenseVector  => GrpcVector(GrpcVector.Value.DenseVector(DenseVector(v.values)))
+    case v: SparkSparseVector => GrpcVector(GrpcVector.Value.SparseVector(SparseVector(v.size, v.indices, v.values)))
   }
 
-  private[knn] def extractDoubleDistance(result: Result): Double = result.getDoubleDistance
+  private[jelmerk] trait Codec[A, B] extends Serializable {
 
-  private[knn] def extractFloatDistance(result: Result): Float = result.getFloatDistance
+    def encode(a: A): B
 
-  private[knn] def extractStringId(result: Result): String = result.getStringId
+    def decode(b: B): A
 
-  private[knn] def extractLongId(result: Result): Long = result.getLongId
+  }
 
-  private[knn] def extractIntId(result: Result): Int = result.getIntId
+  private[knn] object StringIdCodec extends Codec[String, GrpcId] {
+    override def encode(a: String): GrpcId = GrpcId(GrpcId.Value.StringId(a))
 
-  private[knn] def extractFloatArray(request: SearchRequest): Array[Float] = request.vector.floatArrayVector
-    .map(_.values)
-    .orNull
+    override def decode(b: GrpcId): String = b.getStringId
+  }
 
-  private[knn] def extractDoubleArray(request: SearchRequest): Array[Double] = request.vector.doubleArrayVector
-    .map(_.values)
-    .orNull
+  private[knn] object LongIdCodec extends Codec[Long, GrpcId] {
+    override def encode(a: Long): GrpcId = GrpcId(GrpcId.Value.LongId(a))
 
-  private[knn] def extractVector(request: SearchRequest): Vector =
-    if (request.vector.isDenseVector) request.vector.denseVector.map { v => new SparkDenseVector(v.values) }.orNull
-    else request.vector.sparseVector.map { v => new SparkSparseVector(v.size, v.indices, v.values) }.orNull
+    override def decode(b: GrpcId): Long = b.getLongId
+  }
 
-  private[knn] def convertStringId(value: String): Result.Id = Result.Id.StringId(value)
-  private[knn] def convertLongId(value: Long): Result.Id     = Result.Id.LongId(value)
-  private[knn] def convertIntId(value: Int): Result.Id       = Result.Id.IntId(value)
+  private[knn] object IntIdCodec extends Codec[Int, GrpcId] {
+    override def encode(a: Int): GrpcId = GrpcId(GrpcId.Value.IntId(a))
 
-  private[knn] def convertFloatDistance(value: Float): Result.Distance   = Result.Distance.FloatDistance(value)
-  private[knn] def convertDoubleDistance(value: Double): Result.Distance = Result.Distance.DoubleDistance(value)
+    override def decode(b: GrpcId): Int = b.getIntId
+  }
+
+  private[knn] object FloatArrayCodec extends Codec[Array[Float], GrpcVector] {
+
+    override def encode(a: Array[Float]): GrpcVector =
+      GrpcVector(GrpcVector.Value.FloatArrayVector(FloatArrayVector(a)))
+
+    override def decode(b: GrpcVector): Array[Float] = b.getFloatArrayVector.values
+  }
+
+  private[knn] object DoubleArrayCodec extends Codec[Array[Double], GrpcVector] {
+
+    override def encode(a: Array[Double]): GrpcVector =
+      GrpcVector(GrpcVector.Value.DoubleArrayVector(DoubleArrayVector(a)))
+
+    override def decode(b: GrpcVector): Array[Double] = b.getDoubleArrayVector.values
+  }
+
+  private[knn] object VectorCodec extends Codec[Vector, GrpcVector] {
+
+    override def encode(a: Vector): GrpcVector = a match {
+      case v: SparkDenseVector  => GrpcVector(GrpcVector.Value.DenseVector(DenseVector(v.values)))
+      case v: SparkSparseVector => GrpcVector(GrpcVector.Value.SparseVector(SparseVector(v.size, v.indices, v.values)))
+    }
+
+    override def decode(b: GrpcVector): Vector =
+      if (b.value.isDenseVector) new SparkDenseVector(b.getDenseVector.values)
+      else {
+        val v = b.getSparseVector
+        new SparkSparseVector(v.size, v.indices, v.values)
+      }
+  }
+
+  private[knn] object FloatDistance extends Codec[Float, Distance] {
+    override def encode(a: Float): Distance = Distance(Distance.Value.FloatDistance(a))
+
+    override def decode(b: Distance): Float = b.getFloatDistance
+  }
+
+  private[knn] object DoubleDistance extends Codec[Double, Distance] {
+    override def encode(a: Double): Distance = Distance(Distance.Value.DoubleDistance(a))
+
+    override def decode(b: Distance): Double = b.getDoubleDistance
+  }
 
   implicit private[knn] def floatArrayDistanceFunction(name: String): DistanceFunction[Array[Float], Float] =
     (name, vectorApiAvailable) match {

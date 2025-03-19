@@ -37,6 +37,22 @@ def test_hnsw_index_and_query(spark: SparkSession, hnsw: HnswSimilarity) -> None
     finally:
         model.dispose()
 
+def test_hnsw_partition_summaries(spark: SparkSession, hnsw: HnswSimilarity) -> None:
+    items = spark.createDataFrame([
+        [1, Vectors.dense([0.2, 0.9])],
+        [2, Vectors.dense([0.2, 1.0])],
+        [3, Vectors.dense([0.2, 0.1])],
+    ], ['row_id', 'features'])
+
+    model = hnsw.fit(items)
+
+    try:
+        df = model.partitionSummaries()
+
+        assert df.count() == 1
+    finally:
+        model.dispose()
+
 def test_hnsw_save_and_load(hnsw: HnswSimilarity, tmp_path: Path) -> None:
 
     hnsw.write().overwrite().save(tmp_path.as_posix())
