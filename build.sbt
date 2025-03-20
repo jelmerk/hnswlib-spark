@@ -1,6 +1,6 @@
-import sys.process.*
-import scalapb.compiler.Version.scalapbVersion
 import scalapb.compiler.Version.grpcJavaVersion
+import scalapb.compiler.Version.scalapbVersion
+import sys.process.*
 
 ThisBuild / organization := "com.github.jelmerk"
 ThisBuild / scalaVersion := "2.12.18"
@@ -30,28 +30,24 @@ ThisBuild / scapegoatIgnoredFiles := Seq(".*/src_managed/.*")
 
 lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
-
-  licenses := Seq("Apache License 2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.html")),
-
-  homepage := Some(url("https://github.com/jelmerk/hnswlib-spark")),
-
-  scmInfo := Some(ScmInfo(
-    url("https://github.com/jelmerk/hnswlib-spark.git"),
-    "scm:git@github.com:jelmerk/hnswlib-spark.git"
-  )),
-
+  licenses             := Seq("Apache License 2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage             := Some(url("https://github.com/jelmerk/hnswlib-spark")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/jelmerk/hnswlib-spark.git"),
+      "scm:git@github.com:jelmerk/hnswlib-spark.git"
+    )
+  ),
   developers := List(
     Developer("jelmerk", "Jelmer Kuperus", "jkuperus@gmail.com", url("https://github.com/jelmerk"))
   ),
-
   ThisBuild / credentials += Credentials(
     "Sonatype Nexus Repository Manager",
     "oss.sonatype.org",
     sys.env.getOrElse("NEXUS_USER", ""),
     sys.env.getOrElse("NEXUS_PASSWORD", "")
   ),
-
-  publishTo := sonatypePublishToBundle.value,
+  publishTo           := sonatypePublishToBundle.value,
   sonatypeSessionName := s"[sbt-sonatype] ${name.value} ${version.value}"
 )
 
@@ -59,9 +55,9 @@ lazy val noPublishSettings =
   publish / skip := true
 
 val hnswLibVersion = "1.2.0"
-val sparkVersion = settingKey[String]("Spark version")
-val venvFolder = settingKey[String]("Venv folder")
-val pythonVersion = settingKey[String]("Python version")
+val sparkVersion   = settingKey[String]("Spark version")
+val venvFolder     = settingKey[String]("Venv folder")
+val pythonVersion  = settingKey[String]("Python version")
 
 lazy val createVirtualEnv = taskKey[Unit]("Create venv")
 lazy val pyTest           = taskKey[Unit]("Run the python tests")
@@ -80,7 +76,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
     crossScalaVersions := Seq("2.12.18", "2.13.16"),
-    autoScalaLibrary := false,
+    autoScalaLibrary   := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
       val pythonSrcDir = baseDirectory.value / "src" / "main" / "python"
@@ -94,20 +90,25 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Test / envVars += "SPARK_TESTING" -> "1",
     Compile / doc / scalacOptions ++= Seq(
       // it's not easy to make generated proto code protected so just exclude it
-      "-skip-packages", "com.github.jelmerk.index:com.github.jelmerk.registration",
-      "-doc-footer", s"Hnswlib spark v.${version.value}"
+      "-skip-packages",
+      "com.github.jelmerk.index:com.github.jelmerk.registration",
+      "-doc-footer",
+      s"Hnswlib spark v.${version.value}"
     ),
     apiMappings ++= {
-      Option(System.getProperty("sun.boot.class.path")).flatMap { classPath =>
-        classPath.split(java.io.File.pathSeparator).find(_.endsWith(java.io.File.separator + "rt.jar"))
-      }.map { jarPath =>
-        Map(
-          file(jarPath) -> url("https://docs.oracle.com/javase/8/docs/api")
-        )
-      }.getOrElse {
-        streams.value.log.warn("Failed to add bootstrap class path of Java to apiMappings")
-        Map.empty[File,URL]
-      }
+      Option(System.getProperty("sun.boot.class.path"))
+        .flatMap { classPath =>
+          classPath.split(java.io.File.pathSeparator).find(_.endsWith(java.io.File.separator + "rt.jar"))
+        }
+        .map { jarPath =>
+          Map(
+            file(jarPath) -> url("https://docs.oracle.com/javase/8/docs/api")
+          )
+        }
+        .getOrElse {
+          streams.value.log.warn("Failed to add bootstrap class path of Java to apiMappings")
+          Map.empty[File, URL]
+        }
     },
     assembly / mainClass := None,
     assembly / assemblyOption ~= {
@@ -129,13 +130,13 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
-    sparkVersion := sys.props.getOrElse("sparkVersion", "3.4.1"),
-    venvFolder := s"${baseDirectory.value}/.venv",
+    sparkVersion  := sys.props.getOrElse("sparkVersion", "3.4.4"),
+    venvFolder    := s"${baseDirectory.value}/.venv",
     pythonVersion := "python3.9",
     createVirtualEnv := {
       val ret = (
         s"${pythonVersion.value} -m venv ${venvFolder.value}" #&&
-        s"${venvFolder.value}/bin/pip install wheel==0.42.0 pytest==7.4.3 pyspark[ml]==${sparkVersion.value} black==23.3.0 flake8==5.0.4 build==1.2.2.post1 twine==6.0.1"
+          s"${venvFolder.value}/bin/pip install wheel==0.42.0 pytest==7.4.3 pyspark[ml]==${sparkVersion.value} black==23.3.0 flake8==5.0.4 build==1.2.2.post1 twine==6.0.1"
       ).!
       require(ret == 0, "Creating venv failed")
     },
@@ -143,13 +144,15 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val log = streams.value.log
 
       val artifactPath = (Compile / assembly).value.getAbsolutePath
-      val venv = venvFolder.value
+      val venv         = venvFolder.value
 
       if (scalaVersion.value == "2.12.18" && sparkVersion.value >= "3.0.0" || scalaVersion.value == "2.11.12") {
         val ret = Process(
           Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
-          extraEnv = "ARTIFACT_PATH" -> artifactPath, "PYTHONPATH" -> s"${baseDirectory.value}/src/main/python", "SPARK_TESTING" -> "1"
+          extraEnv = "ARTIFACT_PATH" -> artifactPath,
+          "PYTHONPATH"    -> s"${baseDirectory.value}/src/main/python",
+          "SPARK_TESTING" -> "1"
         ).!
         require(ret == 0, "Python tests failed")
       } else {
@@ -193,15 +196,15 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     },
     pyPublish := pyPublish.dependsOn(pyPackage).value,
     libraryDependencies ++= Seq(
-      "com.github.jelmerk"   %  "hnswlib-utils"        % hnswLibVersion,
-      "com.github.jelmerk"   %  "hnswlib-core-jdk17"   % hnswLibVersion,
+      "com.github.jelmerk"    % "hnswlib-utils"        % hnswLibVersion,
+      "com.github.jelmerk"    % "hnswlib-core-jdk17"   % hnswLibVersion,
       "com.github.jelmerk"   %% "hnswlib-scala"        % hnswLibVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapbVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime"      % scalapbVersion % "protobuf",
-      "io.grpc"              %  "grpc-netty"           % grpcJavaVersion,
-      "org.apache.spark"     %% "spark-hive"           % sparkVersion.value             % Provided,
-      "org.apache.spark"     %% "spark-mllib"          % sparkVersion.value             % Provided,
-      "org.scalatest"        %% "scalatest"            % "3.2.19"                       % Test
+      "com.thesamet.scalapb" %% "scalapb-runtime"      % scalapbVersion     % "protobuf",
+      "io.grpc"               % "grpc-netty"           % grpcJavaVersion,
+      "org.apache.spark"     %% "spark-hive"           % sparkVersion.value % Provided,
+      "org.apache.spark"     %% "spark-mllib"          % sparkVersion.value % Provided,
+      "org.scalatest"        %% "scalatest"            % "3.2.19"           % Test
     )
   )
 
@@ -211,12 +214,12 @@ lazy val uberJar = (project in file("hnswlib-spark"))
 // See: https://github.com/sbt/sbt-assembly/blob/develop/README.md#q-despite-the-concerned-friends-i-still-want-publish-%C3%BCber-jars-what-advice-do-you-have
 lazy val cosmetic = project
   .settings(
-    name                                   := s"hnswlib-spark_${sparkVersion.value.split('.').take(2).mkString("_")}",
-    Compile / packageBin                   := (uberJar / assembly).value,
-    Compile / packageDoc                   := (uberJar / Compile / packageDoc).value,
-    Compile / packageSrc                   := (uberJar / Compile / packageSrc).value,
-    autoScalaLibrary                       := false,
-    crossScalaVersions                     := Seq("2.12.18", "2.13.10"),
-    sparkVersion                           := sys.props.getOrElse("sparkVersion", "3.4.1"),
+    name                 := s"hnswlib-spark_${sparkVersion.value.split('.').take(2).mkString("_")}",
+    Compile / packageBin := (uberJar / assembly).value,
+    Compile / packageDoc := (uberJar / Compile / packageDoc).value,
+    Compile / packageSrc := (uberJar / Compile / packageSrc).value,
+    autoScalaLibrary     := false,
+    crossScalaVersions   := Seq("2.12.18", "2.13.10"),
+    sparkVersion         := sys.props.getOrElse("sparkVersion", "3.4.4"),
     publishSettings
   )
