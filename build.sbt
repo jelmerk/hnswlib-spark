@@ -130,7 +130,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
-    sparkVersion  := sys.props.getOrElse("sparkVersion", "3.4.4"),
+    sparkVersion  := sys.props.getOrElse("sparkVersion", "3.5.5"),
     venvFolder    := s"${baseDirectory.value}/.venv",
     pythonVersion := "python3.9",
     createVirtualEnv := {
@@ -220,6 +220,6 @@ lazy val cosmetic = project
     Compile / packageSrc := (uberJar / Compile / packageSrc).value,
     autoScalaLibrary     := false,
     crossScalaVersions   := Seq("2.12.18", "2.13.10"),
-    sparkVersion         := sys.props.getOrElse("sparkVersion", "3.4.4"),
+    sparkVersion         := sys.props.getOrElse("sparkVersion", "3.5.5"),
     publishSettings
   )
