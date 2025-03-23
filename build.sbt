@@ -3,7 +3,7 @@ import scalapb.compiler.Version.scalapbVersion
 import sys.process.*
 
 ThisBuild / organization := "com.github.jelmerk"
-ThisBuild / scalaVersion := "2.12.18"
+ThisBuild / scalaVersion := "2.12.20"
 //ThisBuild / scalaVersion := "2.13.16"
 
 ThisBuild / fork := true
@@ -75,7 +75,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    crossScalaVersions := Seq("2.12.18", "2.13.16"),
+    crossScalaVersions := Seq("2.12.20", "2.13.16"),
     autoScalaLibrary   := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
@@ -146,7 +146,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val artifactPath = (Compile / assembly).value.getAbsolutePath
       val venv         = venvFolder.value
 
-      if (scalaVersion.value == "2.12.18" && sparkVersion.value >= "3.0.0" || scalaVersion.value == "2.11.12") {
+      if (scalaVersion.value == "2.12.20" && sparkVersion.value >= "3.0.0" || scalaVersion.value == "2.11.12") {
         val ret = Process(
           Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
@@ -219,7 +219,7 @@ lazy val cosmetic = project
     Compile / packageDoc := (uberJar / Compile / packageDoc).value,
     Compile / packageSrc := (uberJar / Compile / packageSrc).value,
     autoScalaLibrary     := false,
-    crossScalaVersions   := Seq("2.12.18", "2.13.10"),
+    crossScalaVersions   := Seq("2.12.20", "2.13.10"),
     sparkVersion         := sys.props.getOrElse("sparkVersion", "3.5.5"),
     publishSettings
   )
