@@ -54,7 +54,7 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-val hnswLibVersion = "1.2.0"
+val hnswLibVersion = "1.2.1"
 val sparkVersion   = settingKey[String]("Spark version")
 val venvFolder     = settingKey[String]("Venv folder")
 val pythonVersion  = settingKey[String]("Python version")
