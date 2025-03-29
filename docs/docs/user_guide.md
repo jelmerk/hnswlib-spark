@@ -65,6 +65,7 @@ from pyspark_hnsw.knn import HnswSimilarity
 hnsw = HnswSimilarity(
     identifierCol='id',
     featuresCol='features',
+    distanceFunction='cosine',
     numPartitions=2,
     numThreads=2,
     k=10,
@@ -84,6 +85,7 @@ import com.github.jelmerk.spark.knn.hnsw.HnswSimilarity
 val hnsw = new HnswSimilarity()
   .setIdentifierCol("id")
   .setFeaturesCol("features")
+  .setDistanceFunction("cosine")
   .setNumPartitions(2)
   .setNumThreads(2)
   .setK(10)
@@ -100,21 +102,24 @@ val model = hnsw.fit(items)
 The input DataFrame (e.g., items) must contain two columns:
 
 - `id` - can be a long, int or string
+
 - `features` - can be a vector, sparse vector, float array or double array
 
-`numPartitions` Sets the number of shards to create. Fewer partitions are generally better, as more partitions speed up 
+- `distanceFunction` - one of bray-curtis, canberra, cosine, correlation, euclidean, inner-product, manhattan
+
+- `numPartitions` Sets the number of shards to create. Fewer partitions are generally better, as more partitions speed up 
 indexing but can significantly slow down queries unless the data is pre-partitioned.
 
-`numThreads` Controls the number of CPU cores used for indexing a shard and cannot exceed the cores available on 
+- `numThreads` Controls the number of CPU cores used for indexing a shard and cannot exceed the cores available on 
 an executor. It’s best to set this value equal to the executor’s core count for optimal performance.
 
-`k` Sets the number of similar matches to return
+- `k` Sets the number of similar matches to return
 
-`m` The maximum number of bi-directional connections (neighbors) per node. Higher values improve recall but increase memory usage and search time.
+- `m` The maximum number of bi-directional connections (neighbors) per node. Higher values improve recall but increase memory usage and search time.
 
-`ef` The size of the dynamic candidate list during the search. A higher ef improves recall at the cost of search speed.
+- `ef` The size of the dynamic candidate list during the search. A higher ef improves recall at the cost of search speed.
 
-`efConstruction` Similar to ef, but used during index construction. A higher efConstruction results in a more accurate graph with better recall but increases indexing time and memory usage
+- `efConstruction` Similar to ef, but used during index construction. A higher efConstruction results in a more accurate graph with better recall but increases indexing time and memory usage
 
 After fitting the model, the Spark UI will show running tasks even after the fit method returns.
 
