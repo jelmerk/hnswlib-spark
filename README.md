@@ -13,5 +13,5 @@ use the [1.x.x](https://github.com/jelmerk/hnswlib-spark/tree/v1) release
 
 ## 🚀 Quick Links
 
-📖 **[Documentation](https://jelmerk.github.io/hnswlib-spark/)** – Get started with the official documentation.  
+📖 **[Documentation](https://www.hnswlib-spark.org/)** – Get started with the official documentation.  
 🛠️ **[Examples](https://github.com/jelmerk/hnswlib-spark/tree/master/hnswlib-spark-examples)** – Check out practical examples and use cases.

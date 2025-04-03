@@ -2,8 +2,8 @@ title: Hnswlib Spark
 description: Nearest neighbour search on apache spark
 theme: just-the-docs
 
-url: https://jelmerk.github.io
-baseurl: /hnswlib-spark
+url: http://www.hnswlib-spark.org
+baseurl: ""
 repository: jelmerk/hnswlib-spark # for github-metadata
 
 aux_links:
