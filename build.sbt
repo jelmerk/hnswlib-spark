@@ -32,7 +32,7 @@ lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
   licenses             := Seq("Apache License 2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.html")),
   homepage             := Some(url("https://github.com/jelmerk/hnswlib-spark")),
-  scmInfo := Some(
+  scmInfo              := Some(
     ScmInfo(
       url("https://github.com/jelmerk/hnswlib-spark.git"),
       "scm:git@github.com:jelmerk/hnswlib-spark.git"
@@ -117,7 +117,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     cleanFiles += baseDirectory.value / "dist",
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.first
-      case x =>
+      case x                                                    =>
         val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
         oldStrategy(x)
     },
@@ -130,9 +130,9 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     Compile / PB.targets := Seq(
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     ),
-    sparkVersion  := sys.props.getOrElse("sparkVersion", "3.5.5"),
-    venvFolder    := s"${baseDirectory.value}/.venv",
-    pythonVersion := "python3.9",
+    sparkVersion     := sys.props.getOrElse("sparkVersion", "3.5.5"),
+    venvFolder       := s"${baseDirectory.value}/.venv",
+    pythonVersion    := "python3.9",
     createVirtualEnv := {
       val ret = (
         s"${pythonVersion.value} -m venv ${venvFolder.value}" #&&
@@ -160,25 +160,25 @@ lazy val uberJar = (project in file("hnswlib-spark"))
         log.info(s"Running pyTests for Scala ${scalaVersion.value} and Spark ${sparkVersion.value} is not supported.")
       }
     },
-    pyTest := pyTest.dependsOn(assembly, createVirtualEnv).value,
+    pyTest     := pyTest.dependsOn(assembly, createVirtualEnv).value,
     blackCheck := {
       val ret = s"${venvFolder.value}/bin/black --check ${baseDirectory.value}/src/main/python".!
       require(ret == 0, "Black failed")
     },
     blackCheck := blackCheck.dependsOn(createVirtualEnv).value,
-    black := {
+    black      := {
       val ret = s"${venvFolder.value}/bin/black ${baseDirectory.value}/src/main/python".!
       require(ret == 0, "Black failed")
     },
-    black := black.dependsOn(createVirtualEnv).value,
+    black  := black.dependsOn(createVirtualEnv).value,
     flake8 := {
       val ret = s"${venvFolder.value}/bin/flake8 ${baseDirectory.value}/src/main/python".!
       require(ret == 0, "Flake8 failed")
     },
-    flake8 := flake8.dependsOn(createVirtualEnv).value,
+    flake8    := flake8.dependsOn(createVirtualEnv).value,
     pyPackage := {
       val venv = venvFolder.value
-      val ret = Process(
+      val ret  = Process(
         Seq(s"$venv/bin/python", "-m", "build"),
         cwd = baseDirectory.value,
         extraEnv = "VERSION" -> version.value
@@ -188,7 +188,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
     pyPackage := pyPackage.dependsOn(createVirtualEnv).value,
     pyPublish := {
       val venv = venvFolder.value
-      val ret = Process(
+      val ret  = Process(
         Seq(s"$venv/bin/python", "-m", "twine", "upload", "dist/*"),
         cwd = baseDirectory.value
       ).!

@@ -91,7 +91,7 @@ class IndexServer[TId, TVector, TItem <: Item[TId, TVector] with Product, TDista
   private val executionContext: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
   private implicit val ec: ExecutionContext = ExecutionContext.global
-  private val service =
+  private val service                       =
     new DefaultIndexService(index, hadoopConfig, vectorCodec, idCodec, distanceCodec)
 
   // Build the gRPC server
