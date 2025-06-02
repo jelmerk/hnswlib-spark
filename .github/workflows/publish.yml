@@ -11,7 +11,11 @@ on:
 
 jobs:
   publish-maven-central-artifacts:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+
+    container:
+      image: sbtscala/scala-sbt:eclipse-temurin-17.0.13_11_1.10.5_2.12.20
+
     strategy:
       max-parallel: 1
       fail-fast: false
@@ -19,6 +23,7 @@ jobs:
         spark:
           - 3.4.1
           - 3.5.0
+          - 4.0.0
     env:
       ENV: 'ci'
       SPARK_VERSION: ${{ matrix.spark }}

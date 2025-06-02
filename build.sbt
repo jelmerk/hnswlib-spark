@@ -3,14 +3,30 @@ import scalapb.compiler.Version.scalapbVersion
 import sys.process.*
 
 ThisBuild / organization := "com.github.jelmerk"
-ThisBuild / scalaVersion := "2.12.20"
-//ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.16"
 
 ThisBuild / fork := true
 
 ThisBuild / Test / parallelExecution := false
 
 ThisBuild / dynverSonatypeSnapshots := true
+
+ThisBuild / javaOptions := Seq(
+  "--add-opens=java.base/java.lang=ALL-UNNAMED",
+  "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+  "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+  "--add-opens=java.base/java.io=ALL-UNNAMED",
+  "--add-opens=java.base/java.net=ALL-UNNAMED",
+  "--add-opens=java.base/java.nio=ALL-UNNAMED",
+  "--add-opens=java.base/java.util=ALL-UNNAMED",
+  "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+  "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+  "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+  "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+  "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+  "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
+  "--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED"
+)
 
 ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
@@ -19,7 +35,9 @@ ThisBuild / scalacOptions ++= Seq(
   "-Wconf:msg=higherKinds.*:silent",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ywarn-unused"
+  "-Ywarn-unused",
+  "-target:jvm-1.8",
+  "-encoding", "UTF-8"
 )
 
 ThisBuild / versionScheme := Some("early-semver")
@@ -75,7 +93,13 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    crossScalaVersions := Seq("2.12.20", "2.13.16"),
+    crossScalaVersions := {
+      if (sparkVersion.value >= "4.0.0") {
+        Seq("2.13.16")
+      } else {
+        Seq("2.12.20", "2.13.16")
+      }
+    },
     autoScalaLibrary   := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
@@ -146,7 +170,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val artifactPath = (Compile / assembly).value.getAbsolutePath
       val venv         = venvFolder.value
 
-      if (scalaVersion.value == "2.12.20" && sparkVersion.value >= "3.0.0" || scalaVersion.value == "2.11.12") {
+      if (scalaVersion.value == "2.12.20" && sparkVersion.value < "4.0.0" || sparkVersion.value >= "4.0.0") {
         val ret = Process(
           Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
@@ -219,7 +243,13 @@ lazy val cosmetic = project
     Compile / packageDoc := (uberJar / Compile / packageDoc).value,
     Compile / packageSrc := (uberJar / Compile / packageSrc).value,
     autoScalaLibrary     := false,
-    crossScalaVersions   := Seq("2.12.20", "2.13.10"),
+    crossScalaVersions := {
+      if (sparkVersion.value >= "4.0.0") {
+        Seq("2.13.16")
+      } else {
+        Seq("2.12.20", "2.13.16")
+      }
+    },
     sparkVersion         := sys.props.getOrElse("sparkVersion", "3.5.5"),
     publishSettings
   )

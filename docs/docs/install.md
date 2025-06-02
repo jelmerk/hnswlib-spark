@@ -23,6 +23,9 @@ libraryDependencies += "com.github.jelmerk" %% "hnswlib-spark_3_5" % "{{ site.ve
 
 // for spark 3.5.x
 libraryDependencies += "com.github.jelmerk" %% "hnswlib-spark_3_5" % "{{ site.version_jvm }}"
+
+// for spark 4.0.x
+libraryDependencies += "com.github.jelmerk" %% "hnswlib-spark_4_0" % "{{ site.version_jvm }}"
 ```
 {% endtab %}
 
@@ -30,7 +33,7 @@ libraryDependencies += "com.github.jelmerk" %% "hnswlib-spark_3_5" % "{{ site.ve
 ```xml
 
 <properties>
-    <scala.binary.version>2.12</scala.binary.version>
+    <scala.binary.version>2.13</scala.binary.version>
 </properties>
 
 <dependencies>
@@ -48,19 +51,29 @@ libraryDependencies += "com.github.jelmerk" %% "hnswlib-spark_3_5" % "{{ site.ve
         <artifactId>hnswlib-spark_3_5_${scala.binary.version}</artifactId>
         <version>{{ site.version_jvm }}</version>
     </dependency>
+
+      <!-- for spark 3.5.x -->
+      <dependency>
+         <groupId>com.github.jelmerk</groupId>
+         <artifactId>hnswlib-spark_4_0_${scala.binary.version}</artifactId>
+         <version>{{ site.version_jvm }}</version>
+      </dependency>
 </dependencies>
 ```
 {% endtab %}
 
 {% tab jvm-install gradle %}
 ```gradle
-ext.scalaBinaryVersion = '2.12'
+ext.scalaBinaryVersion = '2.13'
 
 dependencies {
     // for spark 3.4.x 
     implementation("com.github.jelmerk:hnswlib-spark_3_4_$scalaBinaryVersion:{{ site.version_jvm }}")
     // for spark 3.5.x
     implementation("com.github.jelmerk:hnswlib-spark_3_5_$scalaBinaryVersion:{{ site.version_jvm }}")
+    // for spark 4.x.x
+    implementation("com.github.jelmerk:hnswlib-spark_4_0_$scalaBinaryVersion:{{ site.version_jvm }}")
+    
 }
 ```
 {% endtab %}
@@ -82,6 +95,12 @@ dependencies {
    ```
    com.github.jelmerk:hnswlib-spark_3_5_2.12:{{ site.version_jvm }}
    ```
+   
+   for DBR 17.0 and above:   
+   ```
+   com.github.jelmerk:hnswlib-spark_4_0_2.13:{{ site.version_jvm }}
+   ```
+
    then press install
 
 3. Optionally add the following cluster settings for faster searches
@@ -106,6 +125,9 @@ spark-shell --packages 'com.github.jelmerk:hnswlib-spark_3_4_2.12:{{ site.versio
 
 # for spark 3.5.x`
 spark-shell --packages 'com.github.jelmerk:hnswlib-spark_3_5_2.12:{{ site.version_jvm }}'
+
+# for spark 4.0.x`
+spark-shell --packages 'com.github.jelmerk:hnswlib-spark_4_0_2.13:{{ site.version_jvm }}'
 ```
 
 ## Pyspark shell
@@ -116,4 +138,7 @@ pyspark --packages 'com.github.jelmerk:hnswlib-spark_3_4_2.12:{{ site.version_jv
 
 # for spark 3.5.x and scala 2.12,  
 pyspark --packages 'com.github.jelmerk:hnswlib-spark_3_5_2.12:{{ site.version_jvm }}'
+
+# for spark 4.0.x  
+pyspark --packages 'com.github.jelmerk:hnswlib-spark_4_0_2.13:{{ site.version_jvm }}'
 ```
