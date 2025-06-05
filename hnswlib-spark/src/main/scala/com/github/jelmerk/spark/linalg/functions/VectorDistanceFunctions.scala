@@ -119,7 +119,7 @@ object VectorDistanceFunctions {
   def manhattanDistance(u: Vector, v: Vector): Double = (u, v) match {
     case (ud: DenseVector, vd: DenseVector)   => DenseVectorDistanceFunctions.manhattanDistance(ud, vd)
     case (us: SparseVector, vs: SparseVector) => SparseVectorDistanceFunctions.manhattanDistance(us, vs)
-    case (ud: DenseVector, vs: SparseVector) =>
+    case (ud: DenseVector, vs: SparseVector)  =>
       SparseVectorDistanceFunctions.manhattanDistance(ud.toSparse.toSparse, vs)
     case (us: SparseVector, vd: DenseVector) => SparseVectorDistanceFunctions.manhattanDistance(us, vd.toSparse)
   }

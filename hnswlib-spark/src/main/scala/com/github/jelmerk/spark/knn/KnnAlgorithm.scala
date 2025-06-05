@@ -650,7 +650,7 @@ private[knn] trait KnnModelOps[
 
     import sparkSession.implicits._
 
-    val client = clientFactory.create(indexAddresses)
+    val client    = clientFactory.create(indexAddresses)
     val summaries =
       try {
         client.partitionSummaries()
@@ -730,17 +730,17 @@ private[knn] abstract class KnnAlgorithm[TModel <: KnnModelBase[TModel]](overrid
       case (IntegerType, ArrayType(FloatType, _)) => typedFit[Int, Array[Float], IntFloatArrayIndexItem, Float](dataset)
       case (IntegerType, ArrayType(DoubleType, _)) =>
         typedFit[Int, Array[Double], IntDoubleArrayIndexItem, Double](dataset)
-      case (IntegerType, VectorType)           => typedFit[Int, Vector, IntVectorIndexItem, Double](dataset)
-      case (LongType, ArrayType(FloatType, _)) => typedFit[Long, Array[Float], LongFloatArrayIndexItem, Float](dataset)
+      case (IntegerType, VectorType)            => typedFit[Int, Vector, IntVectorIndexItem, Double](dataset)
+      case (LongType, ArrayType(FloatType, _))  => typedFit[Long, Array[Float], LongFloatArrayIndexItem, Float](dataset)
       case (LongType, ArrayType(DoubleType, _)) =>
         typedFit[Long, Array[Double], LongDoubleArrayIndexItem, Double](dataset)
-      case (LongType, VectorType) => typedFit[Long, Vector, LongVectorIndexItem, Double](dataset)
+      case (LongType, VectorType)                => typedFit[Long, Vector, LongVectorIndexItem, Double](dataset)
       case (StringType, ArrayType(FloatType, _)) =>
         typedFit[String, Array[Float], StringFloatArrayIndexItem, Float](dataset)
       case (StringType, ArrayType(DoubleType, _)) =>
         typedFit[String, Array[Double], StringDoubleArrayIndexItem, Double](dataset)
       case (StringType, VectorType) => typedFit[String, Vector, StringVectorIndexItem, Double](dataset)
-      case _ =>
+      case _                        =>
         throw new IllegalArgumentException(
           "Cannot create index for items with identifier of type " +
             s"${identifierType.simpleString} and vector of type ${vectorType.simpleString}. " +
