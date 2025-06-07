@@ -9,5 +9,5 @@ addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.2.13")
 if (sys.props.get("sparkVersion").exists(_.startsWith("4."))) {
   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
 } else {
-  libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
+  libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.18"
 }
