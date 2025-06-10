@@ -43,6 +43,11 @@ jobs:
         with:
           python-version: |
             3.9
+      # for some reason the build is not very stable. add retries for now
       - name: Build and test
-        run: |
-          sbt clean scalafmtCheckAll scapegoat blackCheck flake8 +test pyTest -DsparkVersion="$SPARK_VERSION"
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: |
+            sbt clean scalafmtCheckAll scapegoat blackCheck flake8 +test pyTest -DsparkVersion="$SPARK_VERSION"
