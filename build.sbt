@@ -16,7 +16,7 @@ lazy val pyPackage        = taskKey[Unit]("Package python code")
 lazy val pyPublish        = taskKey[Unit]("Publish python code")
 
 ThisBuild / organization := "com.github.jelmerk"
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 
 ThisBuild / fork := true
 
@@ -50,7 +50,8 @@ ThisBuild / scalacOptions ++= Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-unused",
   "-target:jvm-1.8",
-  "-encoding", "UTF-8"
+  "-encoding",
+  "UTF-8"
 )
 
 ThisBuild / versionScheme := Some("early-semver")
@@ -97,7 +98,6 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-
 lazy val root = (project in file("."))
   .aggregate(uberJar, cosmetic)
   .settings(noPublishSettings)
@@ -106,7 +106,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    autoScalaLibrary   := false,
+    autoScalaLibrary := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
       val pythonSrcDir = baseDirectory.value / "src" / "main" / "python"
