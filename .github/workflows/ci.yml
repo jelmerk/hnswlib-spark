@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: sbtscala/scala-sbt:eclipse-temurin-17.0.13_11_1.10.5_2.12.20
+      image: sbtscala/scala-sbt:eclipse-temurin-17.0.13_11_1.10.5_2.12.21
 
     timeout-minutes: 30
     strategy:

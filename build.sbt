@@ -50,7 +50,8 @@ ThisBuild / scalacOptions ++= Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-unused",
   "-target:jvm-1.8",
-  "-encoding", "UTF-8"
+  "-encoding",
+  "UTF-8"
 )
 
 ThisBuild / versionScheme := Some("early-semver")
@@ -97,7 +98,6 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-
 lazy val root = (project in file("."))
   .aggregate(uberJar, cosmetic)
   .settings(noPublishSettings)
@@ -106,7 +106,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    autoScalaLibrary   := false,
+    autoScalaLibrary := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
       val pythonSrcDir = baseDirectory.value / "src" / "main" / "python"
@@ -174,7 +174,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
       val artifactPath = (Compile / assembly).value.getAbsolutePath
       val venv         = venvFolder.value
 
-      if (scalaVersion.value == "2.12.20" && sparkVersion.value < "4.0.0" || sparkVersion.value >= "4.0.0") {
+      if (scalaVersion.value == "2.12.21" && sparkVersion.value < "4.0.0" || sparkVersion.value >= "4.0.0") {
         val ret = Process(
           Seq(s"$venv/bin/pytest", "--junitxml=target/test-reports/TEST-python.xml", "src/test/python"),
           cwd = baseDirectory.value,
