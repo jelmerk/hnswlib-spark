@@ -50,12 +50,13 @@ ThisBuild / scalacOptions ++= Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-unused",
   "-target:jvm-1.8",
-  "-encoding", "UTF-8"
+  "-encoding",
+  "UTF-8"
 )
 
 ThisBuild / versionScheme := Some("early-semver")
 
-ThisBuild / sparkVersion := sys.props.get("sparkVersion").orElse(sys.env.get("SPARK_VERSION")).getOrElse("3.5.5")
+ThisBuild / sparkVersion := sys.props.get("sparkVersion").orElse(sys.env.get("SPARK_VERSION")).getOrElse("3.5.9")
 
 ThisBuild / pythonVersion := "python3.9"
 
@@ -97,7 +98,6 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings =
   publish / skip := true
 
-
 lazy val root = (project in file("."))
   .aggregate(uberJar, cosmetic)
   .settings(noPublishSettings)
@@ -106,7 +106,7 @@ lazy val uberJar = (project in file("hnswlib-spark"))
   .settings(
     name := s"hnswlib-spark-uberjar_${sparkVersion.value.split('.').take(2).mkString("_")}",
     noPublishSettings,
-    autoScalaLibrary   := false,
+    autoScalaLibrary := false,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "python",
     Compile / unmanagedResources / includeFilter := {
       val pythonSrcDir = baseDirectory.value / "src" / "main" / "python"

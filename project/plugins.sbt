@@ -6,7 +6,7 @@ addSbtPlugin("org.scalameta"           % "sbt-scalafmt"  % "2.4.6")
 addSbtPlugin("com.thesamet"            % "sbt-protoc"    % "1.0.8")
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.2.13")
 
-val sparkVersion = sys.props.get("sparkVersion").orElse(sys.env.get("SPARK_VERSION")).getOrElse("3.5.5")
+val sparkVersion = sys.props.get("sparkVersion").orElse(sys.env.get("SPARK_VERSION")).getOrElse("3.5.9")
 
 if (sparkVersion.startsWith("4.")) {
   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
