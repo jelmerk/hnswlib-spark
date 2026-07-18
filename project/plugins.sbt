@@ -2,7 +2,7 @@ addSbtPlugin("com.eed3si9n"            % "sbt-assembly"  % "2.3.1")
 addSbtPlugin("com.github.sbt"          % "sbt-dynver"    % "5.1.1")
 addSbtPlugin("com.github.sbt"          % "sbt-pgp"       % "2.3.1")
 addSbtPlugin("org.xerial.sbt"          % "sbt-sonatype"  % "3.12.2")
-addSbtPlugin("org.scalameta"           % "sbt-scalafmt"  % "2.4.6")
+addSbtPlugin("org.scalameta"           % "sbt-scalafmt"  % "2.6.2")
 addSbtPlugin("com.thesamet"            % "sbt-protoc"    % "1.0.8")
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.2.13")
 
