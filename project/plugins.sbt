@@ -11,5 +11,5 @@ val sparkVersion = sys.props.get("sparkVersion").orElse(sys.env.get("SPARK_VERSI
 if (sparkVersion.startsWith("4.")) {
   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
 } else {
-  libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.11"
+  libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.21"
 }
